@@ -4,9 +4,9 @@ import matplotlib.pyplot as plt
 import copy
 
 
-# =======================================
+
 # OBJECTIVE FUNCTION
-# =======================================
+
 
 def f2(tensor):
     x = tensor[:, 0]
@@ -34,9 +34,7 @@ def f10(tensor10):
     return f2(tensor2)
 
 
-# =======================================
 # DISKRETIZACIJA
-# =======================================
 
 def discretize(y):
 
@@ -57,9 +55,9 @@ def discretize(y):
     return x
 
 
-# =======================================
+
 # COUPLING LAYER
-# =======================================
+
 
 class CouplingLayer(nn.Module):
 
@@ -67,17 +65,12 @@ class CouplingLayer(nn.Module):
 
         super().__init__()
 
-
-        # input = prvih 5 koordinat
-        # output = scale za drugih 5
         self.s_net = nn.Sequential(
 
             nn.Linear(5, 64),
             nn.ReLU(),
-
             nn.Linear(64, 64),
             nn.ReLU(),
-
             nn.Linear(64, 5),
             nn.Tanh()
         )
@@ -103,21 +96,15 @@ class CouplingLayer(nn.Module):
         x2 = x[:, 5:]
 
 
-        # s in t sta odvisna od prve polovice
+        # s in t sta odvisna od x1
         s = self.s_net(x1)
         t = self.t_net(x1)
 
-
-        # prvo polovico pustimo pri miru
         y1 = x1
 
-
         # drugo polovico transformiramo
-        y2 = (
-            x2 * torch.exp(s)
-            + t
+        y2 = ( x2 * torch.exp(s) + t
         )
-
 
         # sestavimo nazaj 10D vektor
         y = torch.cat(
@@ -125,18 +112,15 @@ class CouplingLayer(nn.Module):
             dim=1
         )
 
-
-        # zdaj imamo 5 scale vrednosti,
-        # zato jih seštejemo
         log_det = s.sum(dim=1)
 
 
         return y, log_det
 
 
-# =======================================
+
 # REAL NVP
-# =======================================
+
 
 class RealNVP(nn.Module):
 
@@ -188,93 +172,67 @@ class RealNVP(nn.Module):
         # omejimo vseh 10 koordinat na (-1, 1)
         y = torch.tanh(y)
 
-
         tanh_log_det = torch.log(
 
             1 - y**2 + 1e-6
 
         ).sum(dim=1)
 
-
         log_det_total += tanh_log_det
 
-
         return y, log_det_total
+    
 
-
-# =======================================
 # MODEL
-# =======================================
 
 model = RealNVP(
     num_layers=4
 )
 
-
 optimizer = torch.optim.Adam(
-
     model.parameters(),
-
     lr=1e-4
 )
 
 
-# =======================================
+
 # TRAINING
-# =======================================
 
 BATCH_SIZE = 1024
 EPOCHS = 2000
 
-
 # fiksen evaluation batch
 eval_generator = torch.Generator().manual_seed(123)
 
-
 eval_r = torch.rand(
-
     20000,
     10,
-
     generator=eval_generator
-
-) * 2 - 1
-
+)*2-1
 
 best_mean_f = float("inf")
 best_state = None
 best_epoch = 0
 
-
 phase_best = float("inf")
 bad_evals = 0
 
-
 for epoch in range(EPOCHS):
-
-
-    # -----------------------------------
+    
     # 1. uniformna 10D distribucija
-    # -----------------------------------
 
     r = torch.rand(
-
         BATCH_SIZE,
         10
+    )*2-1
 
-    ) * 2 - 1
-
-
-    # -----------------------------------
+   
     # 2. RealNVP
-    # -----------------------------------
-
+   
     y, log_det = model(r)
 
-
-    # -----------------------------------
     # 3. diskretizacija + objective
-    # -----------------------------------
+    
 
     with torch.no_grad():
 
@@ -289,97 +247,57 @@ for epoch in range(EPOCHS):
             - objective.mean()
         )
 
-
         weights = weights / (
 
             objective.std()
             + 1e-8
-
         )
 
-
-    # -----------------------------------
     # 4. loss
-    # -----------------------------------
+    loss = -(weights  * log_det).mean()
 
-    loss = -(
-
-        weights
-        * log_det
-
-    ).mean()
-
-
-    # -----------------------------------
     # 5. backprop
-    # -----------------------------------
 
     optimizer.zero_grad()
 
     loss.backward()
 
-
     torch.nn.utils.clip_grad_norm_(
-
         model.parameters(),
-
         max_norm=5.0
-
     )
-
-
     optimizer.step()
-
-
-    # ===================================
+  
     # EVALUATION vsakih 20 epochov
-    # ===================================
-
+  
     if epoch % 20 == 0:
-
-
         with torch.no_grad():
-
-
             eval_y, _ = model(eval_r)
-
-
             eval_x = discretize(
                 eval_y
             )
-
-
             eval_objective = f10(
                 eval_x
             )
-
-
             eval_mean_f = (
                 eval_objective
                 .mean()
                 .item()
             )
-
-
             eval_best_f = (
                 eval_objective
                 .min()
                 .item()
             )
 
-
             # projekcija 10D rešitev nazaj v 2D
             eval_projected = (
                 eval_x @ M
             )
-
-
             projected_mean = (
                 eval_projected
                 .mean(dim=0)
             )
-
-
             hit_001 = (
 
                 eval_objective < 0.01
@@ -401,9 +319,9 @@ for epoch in range(EPOCHS):
             ).float().mean().item()
 
 
-        # -----------------------------------
+       
         # shrani najboljši model
-        # -----------------------------------
+       
 
         if eval_mean_f < best_mean_f:
 
@@ -416,10 +334,8 @@ for epoch in range(EPOCHS):
             )
 
 
-        # -----------------------------------
         # plateau
-        # -----------------------------------
-
+       
         if eval_mean_f < phase_best - 5e-5:
 
             phase_best = eval_mean_f
@@ -430,11 +346,8 @@ for epoch in range(EPOCHS):
 
             bad_evals += 1
 
-
-        # -----------------------------------
         # restore + manjši LR
-        # -----------------------------------
-
+    
         if bad_evals >= 3:
 
 
@@ -442,7 +355,6 @@ for epoch in range(EPOCHS):
                 optimizer
                 .param_groups[0]["lr"]
             )
-
 
             if old_lr <= 1e-6 + 1e-12:
 
@@ -456,7 +368,6 @@ for epoch in range(EPOCHS):
 
                 break
 
-
             new_lr = max(
 
                 old_lr * 0.5,
@@ -464,16 +375,13 @@ for epoch in range(EPOCHS):
                 1e-6
             )
 
-
             # nazaj na najboljši checkpoint
             model.load_state_dict(
                 best_state
             )
 
-
             # reset Adam momentuma
             optimizer.state.clear()
-
 
             # nov learning rate
             for param_group in optimizer.param_groups:
@@ -485,23 +393,17 @@ for epoch in range(EPOCHS):
 
             bad_evals = 0
 
-
             print(
 
                 f"\n--- PLATEAU "
                 f"at epoch {epoch} ---"
 
             )
-
-
             print(
 
                 f"Restored best model "
                 f"from epoch {best_epoch}"
-
             )
-
-
             print(
 
                 f"Learning rate: "
@@ -509,8 +411,6 @@ for epoch in range(EPOCHS):
                 f"-> {new_lr:.2e}"
 
             )
-
-
             print(
 
                 f"Best mean f: "
@@ -518,26 +418,17 @@ for epoch in range(EPOCHS):
 
             )
 
-
             # ponovno evaluiramo restore-an model
             with torch.no_grad():
-
-
                 eval_y, _ = model(
                     eval_r
                 )
-
-
                 eval_x = discretize(
                     eval_y
                 )
-
-
                 eval_objective = f10(
                     eval_x
                 )
-
-
                 eval_mean_f = (
                     eval_objective
                     .mean()
@@ -618,9 +509,9 @@ for epoch in range(EPOCHS):
         )
 
 
-# =======================================
+
 # PO TRENINGU
-# =======================================
+
 
 print()
 
@@ -645,9 +536,9 @@ if best_state is not None:
     )
 
 
-# =======================================
+
 # FINALNA EVALUACIJA
-# =======================================
+
 
 model.eval()
 
@@ -758,9 +649,9 @@ print(
 )
 
 
-# =======================================
+
 # GRAF PROJEKCIJE 10D -> 2D
-# =======================================
+
 
 plot_grid = torch.linspace(
     -4,

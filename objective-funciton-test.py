@@ -8,10 +8,8 @@ GRID_SIZE = 50
 LOW = -1.0
 HIGH = 1.0
 
+# OBJECTIVE FUNCITION
 
-# =======================================
-# OBJECTIVE FUNCTION
-# =======================================
 def f(tensor):
     x = tensor[:, 0]
     y = tensor[:, 1]
@@ -22,9 +20,9 @@ def f(tensor):
     return torch.minimum(q1, q2)
 
 
-# =======================================
+
 # DISKRETIZACIJA
-# =======================================
+
 def discretize(y):
     step = (HIGH - LOW) / (GRID_SIZE - 1)
 
@@ -40,9 +38,9 @@ def discretize(y):
     return x
 
 
-# =======================================
+
 # COUPLING LAYER
-# =======================================
+
 class CouplingLayer(nn.Module):
     def __init__(self):
         super().__init__()
@@ -90,9 +88,8 @@ class CouplingLayer(nn.Module):
         return y, log_det
 
 
-# =======================================
 # REAL NVP
-# =======================================
+
 class RealNVP(nn.Module):
     def __init__(self, num_layers=4):
         super().__init__()
@@ -134,9 +131,9 @@ class RealNVP(nn.Module):
         return y, log_det_total
 
 
-# =======================================
+
 # SETUP
-# =======================================
+
 torch.manual_seed(0)
 
 model = RealNVP(num_layers=4)
@@ -168,9 +165,9 @@ eval_r = torch.rand(
 ) * 2 - 1
 
 
-# =======================================
+
 # CHECKPOINT / PHASE SETUP
-# =======================================
+
 best_mean_f = float("inf")
 best_state = None
 best_epoch = 0
@@ -186,24 +183,24 @@ SWITCH_PATIENCE = 2
 switch_epoch = None
 
 
-# =======================================
+
 # TRAINING
-# =======================================
+
 for epoch in range(EPOCHS):
 
-    # -----------------------------------
+    
     # 1. vzorci iz uniformne distribucije
-    # -----------------------------------
+   
     r = torch.rand(BATCH_SIZE, 2) * 2 - 1
 
-    # -----------------------------------
+
     # 2. RealNVP
-    # -----------------------------------
+   
     y, log_det = model(r)
 
-    # -----------------------------------
+   
     # 3. diskretizacija + objective
-    # -----------------------------------
+ 
     with torch.no_grad():
         x = discretize(y)
         objective = f(x)
@@ -220,14 +217,14 @@ for epoch in range(EPOCHS):
         else:
             weights = objective - objective.mean()
 
-    # -----------------------------------
+   
     # 4. loss
-    # -----------------------------------
+   
     loss = -(weights * log_det).mean()
 
-    # -----------------------------------
+   
     # 5. backpropagation
-    # -----------------------------------
+   
     optimizer.zero_grad()
 
     loss.backward()
@@ -239,9 +236,9 @@ for epoch in range(EPOCHS):
 
     optimizer.step()
 
-    # ===================================
+ 
     # EVALUATION vsakih 20 epochov
-    # ===================================
+   
     if epoch % 20 == 0:
 
         with torch.no_grad():
@@ -257,9 +254,8 @@ for epoch in range(EPOCHS):
                 dim=0,
             ).shape[0]
 
-        # -----------------------------------
-        # shrani najboljši model
-        # -----------------------------------
+      
+
         if eval_mean_f < best_mean_f:
             best_mean_f = eval_mean_f
             best_epoch = epoch
@@ -268,9 +264,7 @@ for epoch in range(EPOCHS):
                 model.state_dict()
             )
 
-        # -----------------------------------
-        # avtomatski preklop faze
-        # -----------------------------------
+      
         just_switched = False
 
         if normalized_phase:
@@ -322,22 +316,18 @@ for epoch in range(EPOCHS):
         if not normalized_phase and not just_switched:
             scheduler.step(eval_mean_f)
 
-        # -----------------------------------
-        # trenutni learning rate
-        # -----------------------------------
+     
+     
         current_lr = optimizer.param_groups[0]["lr"]
 
-        # -----------------------------------
-        # ime faze
-        # -----------------------------------
+   
         if normalized_phase:
             phase = "NORMALIZED"
         else:
             phase = "FINE-TUNE"
 
-        # -----------------------------------
-        # izpis
-        # -----------------------------------
+        
+        
         print(
             f"Epoch {epoch:4d} | "
             f"eval mean f = {eval_mean_f:.4f} | "
