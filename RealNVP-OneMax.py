@@ -122,7 +122,7 @@ class CouplingLayer(nn.Module):
 
 #model
 
-class RealNVP(nn.Module):
+class lNVP(nn.Module):
 
     def __init__(self, num_layers):
 
@@ -207,7 +207,7 @@ import copy
 best_mean = -1
 best_state = None
 
-model = RealNVP(
+model = lNVP(
     NUM_LAYERS
 ).to(DEVICE)
 
