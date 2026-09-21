@@ -1,0 +1,10 @@
+Problem,Metric,RealNVP,(1+1)-EA,Known maximum,Runs RealNVP,Runs EA,Notes
+OneMax,Best observed,100,100,100,,,Both reached the optimum
+LeadingOnes,Best observed,97,100,100,,,EA reached the optimum; RealNVP best observed 97
+ConcatenatedTrap,Best observed,16,16.2,20,,,Both became trapped near deceptive solutions
+NKLandscapes,Mean best,-0.3046623965,-0.2926634223,,3,10,Higher is better
+NKLandscapes,Std best,0.0039148876,0.0004711073,,3,10,
+NKLandscapes,Best run,-0.3001420498,-0.2920664943,,3,10,
+IsingTorus,Mean best,173.3333333333,194,200,3,10,Higher is better
+IsingTorus,Std best,7.0237691686,9.6609178308,200,3,10,
+IsingTorus,Best run,180,200,200,3,10,EA reached the global optimum in 7 of 10 runs
