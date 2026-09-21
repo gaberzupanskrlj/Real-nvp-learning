@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="600" viewBox="0 0 1000 600">
+  <rect width="1000" height="600" fill="#ffffff"/>
+  <style>
+    text { font-family: Inter, Segoe UI, Arial, sans-serif; fill: #172033; }
+    .title { font-size: 28px; font-weight: 700; }
+    .sub { font-size: 15px; fill: #64748b; }
+    .label { font-size: 16px; font-weight: 600; }
+    .tick { font-size: 13px; fill: #64748b; }
+    .value { font-size: 13px; font-weight: 600; }
+  </style>
+
+  <text x="70" y="60" class="title">RealNVP vs (1+1)-EA</text>
+  <text x="70" y="88" class="sub">Best observed performance on benchmarks with a known optimum</text>
+
+  <circle cx="705" cy="58" r="7" fill="#2563eb"/>
+  <text x="720" y="63" class="tick">RealNVP</text>
+  <rect x="818" y="51" width="14" height="14" rx="2" fill="#f59e0b"/>
+  <text x="842" y="63" class="tick">(1+1)-EA</text>
+
+  <g stroke="#e2e8f0" stroke-width="1">
+    <line x1="407" y1="130" x2="407" y2="520"/>
+    <line x1="514" y1="130" x2="514" y2="520"/>
+    <line x1="621" y1="130" x2="621" y2="520"/>
+    <line x1="729" y1="130" x2="729" y2="520"/>
+    <line x1="836" y1="130" x2="836" y2="520"/>
+  </g>
+
+  <line x1="836" y1="122" x2="836" y2="520" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 6"/>
+
+  <text x="407" y="545" text-anchor="middle" class="tick">80%</text>
+  <text x="514" y="545" text-anchor="middle" class="tick">85%</text>
+  <text x="621" y="545" text-anchor="middle" class="tick">90%</text>
+  <text x="729" y="545" text-anchor="middle" class="tick">95%</text>
+  <text x="836" y="545" text-anchor="middle" class="tick">100%</text>
+
+  <text x="80" y="175" class="label">OneMax</text>
+  <line x1="836" y1="163" x2="836" y2="183" stroke="#cbd5e1" stroke-width="2"/>
+  <circle cx="836" cy="162" r="8" fill="#2563eb"/>
+  <rect x="828" y="176" width="16" height="16" rx="2" fill="#f59e0b"/>
+  <text x="855" y="166" class="value">100%</text>
+  <text x="855" y="190" class="value">100%</text>
+
+  <text x="80" y="275" class="label">LeadingOnes</text>
+  <line x1="771" y1="263" x2="836" y2="283" stroke="#cbd5e1" stroke-width="2"/>
+  <circle cx="771" cy="262" r="8" fill="#2563eb"/>
+  <rect x="828" y="276" width="16" height="16" rx="2" fill="#f59e0b"/>
+  <text x="790" y="266" class="value">97%</text>
+  <text x="855" y="290" class="value">100%</text>
+
+  <text x="80" y="375" class="label">ConcatenatedTrap</text>
+  <line x1="407" y1="363" x2="429" y2="383" stroke="#cbd5e1" stroke-width="2"/>
+  <circle cx="407" cy="362" r="8" fill="#2563eb"/>
+  <rect x="421" y="376" width="16" height="16" rx="2" fill="#f59e0b"/>
+  <text x="426" y="357" class="value">80%</text>
+  <text x="447" y="390" class="value">81%</text>
+
+  <text x="80" y="475" class="label">IsingTorus</text>
+  <line x1="621" y1="463" x2="836" y2="483" stroke="#cbd5e1" stroke-width="2"/>
+  <circle cx="621" cy="462" r="8" fill="#2563eb"/>
+  <rect x="828" y="476" width="16" height="16" rx="2" fill="#f59e0b"/>
+  <text x="640" y="466" class="value">90%</text>
+  <text x="855" y="490" class="value">100%</text>
+
+  <text x="300" y="580" class="sub">NKLandscapes is shown separately because no finite reference optimum was available.</text>
+</svg>
