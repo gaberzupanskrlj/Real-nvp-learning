@@ -12,6 +12,22 @@ Real-nvp-learning/
 │   ├── density_estimation/
 │   ├── continuous_optimization/
 │   └── discrete_optimization/
+│       ├── benchmarks/
+│       │   ├── realnvp/
+│       │   │   ├── common.py
+│       │   │   ├── onemax.py
+│       │   │   ├── leading_ones.py
+│       │   │   ├── concatenated_trap.py
+│       │   │   ├── nk_landscapes.py
+│       │   │   └── ising_torus.py
+│       │   └── baselines/
+│       │       ├── one_plus_one_ea.py
+│       │       ├── onemax.py
+│       │       ├── leading_ones.py
+│       │       ├── concatenated_trap.py
+│       │       ├── nk_landscapes.py
+│       │       └── ising_torus.py
+│       └── legacy/
 ├── data/
 │   ├── ioh/
 │   └── ioh_random/
@@ -40,6 +56,22 @@ Five 100-dimensional problems are currently included:
 - ConcatenatedTrap
 - NKLandscapes
 - IsingTorus
+
+The cleaned benchmark code is in:
+
+- `experiments/discrete_optimization/benchmarks/realnvp/`
+- `experiments/discrete_optimization/benchmarks/baselines/`
+
+Shared algorithm code is kept in one place, while each benchmark problem has a small configuration file. Older exploratory scripts are preserved under `experiments/discrete_optimization/legacy/`.
+
+### Running a benchmark
+
+From the repository root:
+
+```bash
+python experiments/discrete_optimization/benchmarks/realnvp/nk_landscapes.py
+python experiments/discrete_optimization/benchmarks/baselines/nk_landscapes.py
+```
 
 The RealNVP optimizer uses a learned search distribution with a REINFORCE-style objective based on exact RealNVP log-probabilities. The baseline is a standard **(1+1)-EA** with bit mutation probability (1/n).
 
@@ -81,6 +113,7 @@ For detailed values and recorded runs, see:
 - [Benchmark report](results/benchmark/README.md)
 - [Raw results](results/benchmark/raw_results.md)
 - [Benchmark summary CSV](results/benchmark/benchmark_summary.csv)
+- [Benchmark script layout](experiments/discrete_optimization/benchmarks/README.md)
 - [Plotting script](plotting/plot_benchmark_comparison.py)
 
 ## Other experiments
@@ -120,4 +153,4 @@ pip install -r requirements.txt
 
 ## Notes
 
-The repository intentionally keeps baseline and intermediate experiments so that changes in the RealNVP optimization method can be compared rather than overwritten.
+The repository intentionally keeps older exploratory scripts under `legacy/` so that changes in the RealNVP optimization method remain traceable without cluttering the active benchmark code.
