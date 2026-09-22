@@ -1,0 +1,11 @@
+{
+  "problem_name": "IsingTorus",
+  "output_dir": "results/benchmark_100seeds/one_plus_one_ea/ising_torus",
+  "dimension": 100,
+  "problem_instance": 1,
+  "max_evaluations": 4096000,
+  "seed_start": 42,
+  "n_seeds": 100,
+  "workers": 24,
+  "target": 200.0
+}

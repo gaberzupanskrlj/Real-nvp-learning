@@ -1,0 +1,21 @@
+{
+  "problem": "IsingTorus",
+  "runs": 100,
+  "mean_best": 195.0,
+  "std_best": 8.70388279778489,
+  "median_best": 200.0,
+  "best_run": 200.0,
+  "worst_run": 180.0,
+  "mean_training_seconds": 14.79214139624848,
+  "std_training_seconds": 25.68189016619283,
+  "median_training_seconds": 0.06851104903034866,
+  "mean_evaluations_used": 1025994.94,
+  "median_evaluations_used": 2973.5,
+  "target": 200.0,
+  "target_hits": 75,
+  "target_hit_rate": 0.75,
+  "mean_evaluations_to_target": 2659.92,
+  "median_evaluations_to_target": 2448.0,
+  "mean_time_to_target_seconds": 0.05849827245809138,
+  "median_time_to_target_seconds": 0.05121421196963638
+}
