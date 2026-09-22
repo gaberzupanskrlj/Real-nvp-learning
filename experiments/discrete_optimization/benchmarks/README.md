@@ -82,6 +82,8 @@ For problems with a known target, the runner additionally records:
 - evaluations to target;
 - time to target.
 
+The (1+1)-EA stops a run once the known global target is reached. In the convergence plots, that terminal optimum is forward-filled to the common 4,096,000-evaluation horizon. This does not imply extra objective calls after the optimum was found; it only represents the best-so-far value, which cannot improve beyond a known global optimum.
+
 ## Final results
 
 | Problem | RealNVP mean best ± std | (1+1)-EA mean best ± std | RealNVP target hits | EA target hits |
