@@ -29,3 +29,10 @@ Thumbs.db
 *.pt
 *.pth
 *.ckpt
+
+# Temporary benchmark writes
+*.tmp
+
+# Large per-seed benchmark traces
+results/benchmark_100seeds/realnvp/*/seed_*/
+results/benchmark_100seeds/one_plus_one_ea/*/seed_*/
