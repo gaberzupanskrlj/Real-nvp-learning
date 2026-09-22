@@ -172,11 +172,11 @@ def plot_problem(problem_key, problem_name):
     if problem_key == "concatenated_trap":
         ax.set_ylim(10, 20.5)
         ax.axhline(
-        20,
-        linestyle="--",
-        linewidth=1.5,
-        label="Global optimum = 20",
-    )
+            20,
+            linestyle="--",
+            linewidth=1.5,
+            label="Global optimum = 20",
+        )
     if problem_key == "ising_torus":
         ax.axhline(
         200,
