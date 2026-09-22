@@ -1,15 +1,10 @@
-# Discrete optimization benchmark scripts
+# Discrete optimization benchmark
 
-This folder contains the benchmark implementation used to compare a **RealNVP-based discrete optimizer** with a classical **(1+1)-EA** on IOH/PBO problems.
-
-The repository now contains two layers of experiments:
-
-1. the earlier exploratory benchmark scripts;
-2. the current **100-seed statistical benchmark**, designed for fair convergence comparisons.
+This folder contains the implementation used for the final 100-seed comparison between a **RealNVP-based discrete optimizer** and a classical **(1+1)-EA** on IOH/PBO problems.
 
 ## Problems
 
-All current benchmark problems use dimension 100:
+All benchmarks use dimension 100:
 
 - OneMax
 - LeadingOnes
@@ -21,9 +16,7 @@ All current benchmark problems use dimension 100:
 
 ### RealNVP
 
-The optimizer learns a search distribution with affine coupling layers and a REINFORCE-style objective based on exact RealNVP log-probabilities.
-
-The current training signal is
+The optimizer learns a search distribution with affine coupling layers. Samples are thresholded into binary solutions and the model is trained with a REINFORCE-style objective using exact RealNVP log-probabilities.
 
 ```text
 advantage = reward - leave-one-out baseline
@@ -34,58 +27,46 @@ Gradient clipping is set to 5.0.
 
 ### (1+1)-EA
 
-The baseline is a standard elitist (1+1)-EA with independent bit mutation probability
+The baseline is a standard elitist (1+1)-EA with independent bit mutation probability:
 
 ```text
 p = 1 / dimension
 ```
 
-and offspring accepted when its objective value is at least as good as the current parent.
+An offspring is accepted when its objective value is at least as good as the current parent.
 
-## 100-seed benchmark protocol
+## Final benchmark protocol
 
-The current benchmark uses the same seed range for both algorithms:
+Both algorithms use:
 
 ```text
 seeds = 42, 43, ..., 141
 n = 100
+dimension = 100
+maximum budget = 4,096,000 objective-function evaluations
 ```
 
-The common optimization budget is:
-
-```text
-4,096,000 objective-function evaluations
-```
-
-For RealNVP, **all objective calls that affect optimization are counted**, including:
+For RealNVP, every objective call that can influence optimization is counted, including:
 
 - training-batch evaluations;
 - validation evaluations used for checkpoint selection.
 
-The final test set is reported separately and is **not counted as optimization budget**.
+The final test set is reported separately and is not counted toward the optimization budget.
 
-The primary comparison axis is therefore:
+The main comparison is:
 
 ```text
 x = objective-function evaluations
 y = best objective value found so far
 ```
 
-For each problem, convergence curves are aggregated over 100 independent seeds and plotted as:
+Convergence curves are aggregated as:
 
 ```text
 mean best-so-far ± 1 standard deviation
 ```
 
-## Target metrics
-
-For problems with a known optimum, the benchmark also records:
-
-- target hit rate;
-- evaluations to target;
-- time to target.
-
-The current targets are:
+## Known targets
 
 | Problem | Target |
 |---|---:|
@@ -95,24 +76,25 @@ The current targets are:
 | IsingTorus | 200 |
 | NKLandscapes | no fixed target |
 
-## Runtime methodology
+For problems with a known target, the runner additionally records:
 
-The 100-seed experiments are executed in parallel for throughput, typically with 24 CPU workers and one PyTorch/BLAS thread per worker.
+- target hit rate;
+- evaluations to target;
+- time to target.
 
-Because parallel workers compete for cache, memory bandwidth and other shared CPU resources, their wall-clock times are **not treated as the final algorithmic runtime comparison**.
+## Final results
 
-A separate timing study should use:
+| Problem | RealNVP mean best ± std | (1+1)-EA mean best ± std | RealNVP target hits | EA target hits |
+|---|---:|---:|---:|---:|
+| OneMax | 100.000 ± 0.000 | 100.000 ± 0.000 | 100/100 | 100/100 |
+| LeadingOnes | 77.300 ± 12.356 | 100.000 ± 0.000 | 1/100 | 100/100 |
+| ConcatenatedTrap | 16.002 ± 0.020 | 16.350 ± 0.256 | 0/100 | 0/100 |
+| NKLandscapes | -0.30309 ± 0.00360 | -0.29265 ± 0.00093 | n/a | n/a |
+| IsingTorus | 172.160 ± 7.768 | 195.000 ± 8.704 | 1/100 | 75/100 |
 
-- the same machine;
-- `workers=1`;
-- identical runtime conditions;
-- a smaller fixed seed set.
-
-The primary statistical benchmark remains evaluation-based.
+For detailed interpretation, see [the final benchmark report](../../../results/benchmark_100seeds/README.md).
 
 ## Output layout
-
-The 100-seed runs write results under:
 
 ```text
 results/benchmark_100seeds/
@@ -126,31 +108,29 @@ results/benchmark_100seeds/
 │           └── result.json
 ├── one_plus_one_ea/
 │   └── <problem>/
-└── figures/
+├── figures/
+└── benchmark_summary.csv
 ```
 
-Each seed is saved independently, allowing interrupted experiments to resume without repeating completed runs.
+Each seed is saved independently. Existing `result.json` files are detected on restart, so interrupted runs resume without repeating completed seeds.
 
-Results are first written to temporary files and then renamed into place so that an interrupted process is less likely to leave a partially written result file.
+Result files are first written to temporary paths and then renamed into place to reduce the chance of leaving partially written outputs after an interruption.
 
-## Current completed result
+## Runtime methodology
 
-The first completed 100-seed comparison is **OneMax**.
+The 100-seed experiments were run in parallel for throughput, typically using 24 CPU workers with one PyTorch/BLAS thread per worker.
 
-| Metric | RealNVP | (1+1)-EA |
-|---|---:|---:|
-| Runs | 100 | 100 |
-| Target hits | 100 | 100 |
-| Mean best | 100.0 | 100.0 |
-| Mean evaluations to target | 134,574.08 | 1,027.44 |
-| Median evaluations to target | 135,168 | 962.5 |
+Those wall-clock times are influenced by cache, memory-bandwidth and scheduling contention. They should not be treated as the final runtime comparison.
 
-Both algorithms reached the optimum in every run, while the (1+1)-EA required far fewer objective evaluations on this simple incremental problem.
+A separate timing experiment should use:
 
-LeadingOnes and the remaining benchmarks are currently being evaluated under the same protocol.
+- the same machine;
+- `workers=1`;
+- identical runtime conditions;
+- the same fixed seed set.
+
+The final statistical benchmark is therefore primarily **evaluation-based**.
 
 ## Exploratory results
 
-The earlier results under `results/benchmark/` were useful for model development, but they used unequal seed counts and should not be interpreted as the final statistical comparison.
-
-They are preserved for reproducibility and to show the development history of the RealNVP optimizer.
+Older results under `results/benchmark/` are preserved as development history. They used smaller and unequal seed counts and should not be interpreted as the final statistical study.
