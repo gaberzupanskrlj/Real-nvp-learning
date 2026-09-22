@@ -2,32 +2,11 @@
 
 A research/learning repository for experimenting with **RealNVP normalizing flows** in PyTorch, from density estimation to continuous and discrete black-box optimization.
 
-This branch focuses on a structured benchmark comparison between a **RealNVP-based discrete optimizer** and a classical **(1+1)-EA**.
-
-## Project structure
-
-```text
-Real-nvp-learning/
-├── experiments/
-│   ├── density_estimation/
-│   ├── continuous_optimization/
-│   └── discrete_optimization/
-│       ├── benchmarks/
-│       │   ├── realnvp/
-│       │   └── baselines/
-│       └── legacy/
-├── data/
-├── results/
-├── plotting/
-├── notes/
-├── README.md
-├── requirements.txt
-└── .gitignore
-```
+This branch contains a completed 100-seed benchmark comparison between a **RealNVP-based discrete optimizer** and a classical **(1+1)-EA**.
 
 ## Discrete optimization benchmark
 
-Five 100-dimensional IOH/PBO problems are currently included:
+Five 100-dimensional IOH/PBO problems are included:
 
 - OneMax
 - LeadingOnes
@@ -40,25 +19,16 @@ The benchmark compares:
 - a RealNVP search distribution trained with a REINFORCE-style objective;
 - a standard elitist (1+1)-EA with bit mutation probability `1 / n`.
 
-The earlier exploratory experiments are preserved under `results/benchmark/`. They were useful during development but used unequal numbers of seeds and incomplete objective-evaluation accounting.
-
-The current study replaces that exploratory comparison with a controlled **100-seed statistical benchmark**.
-
-### Current 100-seed protocol
-
-Both algorithms use the same seed range:
+The final study uses:
 
 ```text
-42 ... 141
-```
-
-with:
-
-```text
-100 independent runs per algorithm/problem
-4,096,000 objective-function evaluations maximum
+100 seeds per algorithm/problem
+seeds 42 ... 141
 dimension = 100
+maximum budget = 4,096,000 objective evaluations
 ```
+
+That gives **1,000 benchmark runs** in total.
 
 The primary convergence metric is:
 
@@ -66,100 +36,85 @@ The primary convergence metric is:
 best objective found so far vs. objective-function evaluations
 ```
 
-For RealNVP, training and validation objective calls are both included in the optimization budget because validation is used for checkpoint selection. The final test set is reported separately and is not counted toward the optimization budget.
+Curves are aggregated as **mean ± 1 standard deviation** across 100 independent seeds.
 
-For each problem, convergence is aggregated over all seeds using:
+## Final 100-seed results
+
+Higher objective values are better for all five problems.
+
+| Problem | RealNVP mean best ± std | (1+1)-EA mean best ± std | RealNVP target hits | EA target hits |
+|---|---:|---:|---:|---:|
+| OneMax | 100.000 ± 0.000 | 100.000 ± 0.000 | 100/100 | 100/100 |
+| LeadingOnes | 77.300 ± 12.356 | 100.000 ± 0.000 | 1/100 | 100/100 |
+| ConcatenatedTrap | 16.002 ± 0.020 | 16.350 ± 0.256 | 0/100 | 0/100 |
+| NKLandscapes | -0.30309 ± 0.00360 | -0.29265 ± 0.00093 | n/a | n/a |
+| IsingTorus | 172.160 ± 7.768 | 195.000 ± 8.704 | 1/100 | 75/100 |
+
+Known targets are 100 for OneMax, 100 for LeadingOnes, 20 for ConcatenatedTrap and 200 for IsingTorus.
+
+### Main findings
+
+- **OneMax:** both algorithms are reliable, but the (1+1)-EA is far more sample-efficient. Mean evaluations to target are 1,027 for the EA versus 134,574 for RealNVP.
+- **LeadingOnes:** RealNVP shows strong seed-to-seed instability and reaches the optimum in only 1/100 runs.
+- **ConcatenatedTrap:** both methods struggle, but RealNVP almost deterministically collapses to the same deceptive local optimum near 16.
+- **NKLandscapes:** the EA is consistently better and substantially less variable. Its mean is even better than the best RealNVP run observed in the 100-seed experiment.
+- **IsingTorus:** the strongest reliability gap; RealNVP reaches 200 in 1/100 runs while the EA reaches it in 75/100.
+
+The current **RealNVP + REINFORCE + threshold discretization** setup does not outperform the (1+1)-EA on these five benchmarks. The value of the study is that it reveals several distinct failure modes rather than a single generic weakness.
+
+## Full report
+
+- [Final 100-seed benchmark report](results/benchmark_100seeds/README.md)
+- [Machine-readable benchmark summary](results/benchmark_100seeds/benchmark_summary.csv)
+- [Benchmark methodology](experiments/discrete_optimization/benchmarks/README.md)
+
+## Benchmark implementation
+
+The active benchmark code is organized under:
 
 ```text
-mean best-so-far ± 1 standard deviation
+experiments/discrete_optimization/benchmarks/
+├── realnvp/
+└── baselines/
 ```
 
-For problems with a known optimum, the benchmark also records target hit rate, evaluations to target and time to target.
-
-### Completed 100-seed result: OneMax
-
-The first full comparison is complete:
-
-| Metric | RealNVP | (1+1)-EA |
-|---|---:|---:|
-| Runs | 100 | 100 |
-| Target hits | 100 | 100 |
-| Mean best | 100.0 | 100.0 |
-| Mean evaluations to target | 134,574.08 | 1,027.44 |
-| Median evaluations to target | 135,168 | 962.5 |
-
-Both methods reached the optimum in every run. On OneMax, the (1+1)-EA reached it with substantially fewer objective evaluations.
-
-LeadingOnes and the remaining benchmark problems are being evaluated under the same protocol.
-
-### Runtime note
-
-The 100-seed experiments are run in parallel to improve throughput. Parallel wall-clock times are affected by shared CPU resources and are therefore **not used as the final runtime comparison**.
-
-A separate timing experiment should use the same hardware with `workers=1` and identical conditions for both algorithms.
-
-For the full benchmark methodology and output format, see:
-
-- [Discrete optimization benchmark protocol](experiments/discrete_optimization/benchmarks/README.md)
-
-## Benchmark outputs
-
-The statistical benchmark stores per-seed and aggregate outputs under:
+The 100-seed runner stores per-seed convergence data, per-seed result metadata, aggregate statistics and resumable output under:
 
 ```text
 results/benchmark_100seeds/
 ```
 
-Each seed records its own convergence curve and result metadata, which allows interrupted experiments to resume without rerunning completed seeds.
+The plotting workflow creates one convergence figure per problem under:
 
-Plots compare the algorithms using objective evaluations on the x-axis rather than epochs or optimizer steps.
+```text
+results/benchmark_100seeds/figures/
+```
+
+## Runtime note
+
+The main experiments were run in parallel for throughput. Parallel wall-clock times are affected by shared CPU resources and are not treated as the final algorithmic runtime comparison.
+
+A separate timing experiment should use identical hardware with `workers=1` for both algorithms.
 
 ## Earlier exploratory benchmark
 
-The older benchmark results remain available for development history:
-
-- [Benchmark report](results/benchmark/README.md)
-- [Raw results](results/benchmark/raw_results.md)
-- [Benchmark summary CSV](results/benchmark/benchmark_summary.csv)
-- [Original plotting script](plotting/plot_benchmark_comparison.py)
-
-Those results should be treated as exploratory rather than as the final statistical comparison.
-
-## Other experiments
-
-### Density estimation
-
-- Ring distribution transformed with RealNVP.
-- Historical Two Moons experiment.
-
-### Continuous optimization
-
-- 2D multimodal objective on a discretized 50×50 grid.
-- Uniform and Gaussian base-distribution variants.
-- 10D extensions projected into a 2D objective space.
+Older exploratory results are preserved under `results/benchmark/`. They used fewer and unequal numbers of seeds and should not be confused with the final 100-seed study.
 
 ## Installation
 
-Create a virtual environment:
-
 ```bash
 python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-Windows:
+On Windows:
 
 ```bash
 .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-Linux/macOS:
+## Other experiments
 
-```bash
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-## Notes
-
-Older exploratory scripts are intentionally preserved under `legacy/` so that changes in the RealNVP optimization method remain traceable without cluttering the active benchmark code.
+The repository also contains earlier density-estimation and continuous-optimization experiments, while legacy discrete scripts are preserved so the development of the optimizer remains traceable.
