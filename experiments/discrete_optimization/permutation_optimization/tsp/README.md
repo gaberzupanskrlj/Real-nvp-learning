@@ -1,50 +1,60 @@
-# Permutation optimization
+# TSP permutation optimization
 
-This directory starts the next discrete-search-space experiment after the
-binary IOH/PBO benchmark.
+This folder contains the first permutation-valued experiments for the discrete RealNVP project.
 
-The first problem is deliberately small and self-contained:
+The problem is a symmetric Euclidean Traveling Salesman Problem (TSP). City coordinates are sampled once in the unit square and kept fixed with `TSP_INSTANCE_SEED = 12345`.
 
-- **problem:** symmetric Euclidean Traveling Salesman Problem (TSP);
-- **size:** 10 cities;
-- **instance:** fixed 2D coordinates generated with seed `12345`;
-- **solution representation:** a permutation of the city indices;
-- **objective:** minimize the length of the closed tour;
-- **baseline:** elitist **(1+1)-EA** with inversion mutation;
-- **sanity check:** an exact brute-force optimum is computed by fixing city 0
-  and enumerating the remaining `9!` orderings.
+## Representation
+
+RealNVP stays continuous. A generated vector `y` is converted into a valid permutation with a random-key decoder:
+
+```python
+tour = torch.argsort(y, dim=1)
+```
+
+The TSP objective is the length of the closed tour. Training uses reward `-tour_length` with the same REINFORCE / leave-one-out baseline used in the binary experiments.
+
+## Files
+
+- `realnvp_tsp.py` — single RealNVP TSP-20 run with convergence and tour plots.
+- `realnvp_tsp_10seeds.py` — RealNVP TSP-20 experiment for seeds 42–51.
+- `inversion_baseline_10seeds.py` — simple elitist inversion local-search baseline for seeds 42–51.
+- `simple_tsp_baseline.py` — initial TSP-10 sanity-check baseline kept for reference.
+
+## Current TSP-20 setup
+
+| Parameter | Value |
+|---|---:|
+| Cities | 20 |
+| Instance seed | 12345 |
+| RealNVP layers | 4 |
+| Hidden dimension | 64 |
+| Batch size | 1024 |
+| Epochs | 2000 |
+| Learning rate | 1e-4 |
+| Training seeds | 42–51 |
+| Reference optimum | 3.513668846 |
 
 ## Run
 
 From the repository root:
 
 ```bash
-python experiments/discrete_optimization/permutation_optimization/tsp/simple_tsp_baseline.py
+python experiments/discrete_optimization/permutation_optimization/tsp/realnvp_tsp.py
 ```
-
-Use a different optimization budget or algorithm seed with:
 
 ```bash
-python experiments/discrete_optimization/permutation_optimization/tsp/simple_tsp_baseline.py --budget 50000 --seed 43
+python experiments/discrete_optimization/permutation_optimization/tsp/realnvp_tsp_10seeds.py
 ```
-
-For a quick run without the exact brute-force check:
 
 ```bash
-python experiments/discrete_optimization/permutation_optimization/tsp/simple_tsp_baseline.py --skip-exact
+python experiments/discrete_optimization/permutation_optimization/tsp/inversion_baseline_10seeds.py
 ```
 
-## Why this comes first
+## Current result
 
-The goal of this script is only to verify the permutation-valued problem and a
-simple baseline before introducing the normalizing flow.
+On the fixed TSP-20 instance, RealNVP reached the reference optimum in 3/10 runs. The inversion baseline reached it in 4/10 runs. Both had median best tour length `3.522437`, while the inversion baseline was substantially more stable across seeds.
 
-The intended next experiment keeps the existing RealNVP model continuous and
-replaces binary thresholding with a random-key decoder:
+The fast inversion implementation uses the fact that an inversion changes only two boundary edges in a symmetric TSP. Its `best_found_eval` therefore counts candidate inversion moves, not full black-box objective recomputations. Use this distinction when making runtime or evaluation-cost claims.
 
-```python
-tour = torch.argsort(y, dim=1)
-```
-
-Every continuous sample then maps to a valid TSP permutation without duplicate
-cities or a repair step.
+Detailed results are stored under `results/permutation_optimization/tsp20/`.
