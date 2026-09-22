@@ -2,7 +2,7 @@
 
 A research/learning repository for experimenting with **RealNVP normalizing flows** in PyTorch, from density estimation to continuous and discrete black-box optimization.
 
-This branch adds a structured benchmark comparison between a **RealNVP-based discrete optimizer** and a classical **(1+1)-EA**.
+This branch focuses on a structured benchmark comparison between a **RealNVP-based discrete optimizer** and a classical **(1+1)-EA**.
 
 ## Project structure
 
@@ -14,33 +14,11 @@ Real-nvp-learning/
 │   └── discrete_optimization/
 │       ├── benchmarks/
 │       │   ├── realnvp/
-│       │   │   ├── common.py
-│       │   │   ├── onemax.py
-│       │   │   ├── leading_ones.py
-│       │   │   ├── concatenated_trap.py
-│       │   │   ├── nk_landscapes.py
-│       │   │   └── ising_torus.py
 │       │   └── baselines/
-│       │       ├── one_plus_one_ea.py
-│       │       ├── onemax.py
-│       │       ├── leading_ones.py
-│       │       ├── concatenated_trap.py
-│       │       ├── nk_landscapes.py
-│       │       └── ising_torus.py
 │       └── legacy/
 ├── data/
-│   ├── ioh/
-│   └── ioh_random/
 ├── results/
-│   ├── figures/
-│   ├── logs/
-│   └── benchmark/
-│       ├── figures/
-│       ├── benchmark_summary.csv
-│       ├── raw_results.md
-│       └── README.md
 ├── plotting/
-│   └── plot_benchmark_comparison.py
 ├── notes/
 ├── README.md
 ├── requirements.txt
@@ -49,7 +27,7 @@ Real-nvp-learning/
 
 ## Discrete optimization benchmark
 
-Five 100-dimensional problems are currently included:
+Five 100-dimensional IOH/PBO problems are currently included:
 
 - OneMax
 - LeadingOnes
@@ -57,64 +35,95 @@ Five 100-dimensional problems are currently included:
 - NKLandscapes
 - IsingTorus
 
-The cleaned benchmark code is in:
+The benchmark compares:
 
-- `experiments/discrete_optimization/benchmarks/realnvp/`
-- `experiments/discrete_optimization/benchmarks/baselines/`
+- a RealNVP search distribution trained with a REINFORCE-style objective;
+- a standard elitist (1+1)-EA with bit mutation probability `1 / n`.
 
-Shared algorithm code is kept in one place, while each benchmark problem has a small configuration file. Older exploratory scripts are preserved under `experiments/discrete_optimization/legacy/`.
+The earlier exploratory experiments are preserved under `results/benchmark/`. They were useful during development but used unequal numbers of seeds and incomplete objective-evaluation accounting.
 
-### Running a benchmark
+The current study replaces that exploratory comparison with a controlled **100-seed statistical benchmark**.
 
-From the repository root:
+### Current 100-seed protocol
 
-```bash
-python experiments/discrete_optimization/benchmarks/realnvp/nk_landscapes.py
-python experiments/discrete_optimization/benchmarks/baselines/nk_landscapes.py
+Both algorithms use the same seed range:
+
+```text
+42 ... 141
 ```
 
-The RealNVP optimizer uses a learned search distribution with a REINFORCE-style objective based on exact RealNVP log-probabilities. The baseline is a standard **(1+1)-EA** with bit mutation probability (1/n).
+with:
 
-### Overview
+```text
+100 independent runs per algorithm/problem
+4,096,000 objective-function evaluations maximum
+dimension = 100
+```
 
-![Benchmark overview](results/benchmark/figures/benchmark_overview.svg)
+The primary convergence metric is:
 
-| Problem | RealNVP | (1+1)-EA | Observation |
-|---|---:|---:|---|
-| OneMax | best 100 / 100 | best 100 / 100 | Both reach the optimum |
-| LeadingOnes | best 97 / 100 | best 100 / 100 | EA reaches the optimum more efficiently |
-| ConcatenatedTrap | best 16 / 20 | best 16.2 / 20 | Both struggle with deceptive structure |
-| NKLandscapes | mean best -0.304662 | mean best -0.292663 | EA is better; higher is better |
-| IsingTorus | mean best 173.33 / 200 | mean best 194 / 200 | EA reaches 200 in 7/10 runs |
+```text
+best objective found so far vs. objective-function evaluations
+```
 
-### NKLandscapes
+For RealNVP, training and validation objective calls are both included in the optimization budget because validation is used for checkpoint selection. The final test set is reported separately and is not counted toward the optimization budget.
 
-![NKLandscapes comparison](results/benchmark/figures/nk_landscapes.svg)
+For each problem, convergence is aggregated over all seeds using:
 
-RealNVP: 3 seeds.  
-(1+1)-EA: 10 seeds.
+```text
+mean best-so-far ± 1 standard deviation
+```
 
-### IsingTorus
+For problems with a known optimum, the benchmark also records target hit rate, evaluations to target and time to target.
 
-![IsingTorus comparison](results/benchmark/figures/ising_torus.svg)
+### Completed 100-seed result: OneMax
 
-The best RealNVP run reached **180 / 200**. The EA reached the global optimum of **200 / 200 in 7 of 10 runs**.
+The first full comparison is complete:
 
-## Current interpretation
+| Metric | RealNVP | (1+1)-EA |
+|---|---:|---:|
+| Runs | 100 | 100 |
+| Target hits | 100 | 100 |
+| Mean best | 100.0 | 100.0 |
+| Mean evaluations to target | 134,574.08 | 1,027.44 |
+| Median evaluations to target | 135,168 | 962.5 |
 
-The experiments show that RealNVP can learn a strong search distribution on a simple problem such as OneMax. On more structured or rugged landscapes, however, the current setup often concentrates around a suboptimal region and eventually loses reward variance.
+Both methods reached the optimum in every run. On OneMax, the (1+1)-EA reached it with substantially fewer objective evaluations.
 
-The (1+1)-EA performs particularly well when incremental local mutations can preserve already-good structure.
+LeadingOnes and the remaining benchmark problems are being evaluated under the same protocol.
 
-These comparisons are still exploratory. The current benchmark does **not** yet use the same number of independent runs for every algorithm/problem pair, so the results should not be treated as a final statistical study.
+### Runtime note
 
-For detailed values and recorded runs, see:
+The 100-seed experiments are run in parallel to improve throughput. Parallel wall-clock times are affected by shared CPU resources and are therefore **not used as the final runtime comparison**.
+
+A separate timing experiment should use the same hardware with `workers=1` and identical conditions for both algorithms.
+
+For the full benchmark methodology and output format, see:
+
+- [Discrete optimization benchmark protocol](experiments/discrete_optimization/benchmarks/README.md)
+
+## Benchmark outputs
+
+The statistical benchmark stores per-seed and aggregate outputs under:
+
+```text
+results/benchmark_100seeds/
+```
+
+Each seed records its own convergence curve and result metadata, which allows interrupted experiments to resume without rerunning completed seeds.
+
+Plots compare the algorithms using objective evaluations on the x-axis rather than epochs or optimizer steps.
+
+## Earlier exploratory benchmark
+
+The older benchmark results remain available for development history:
 
 - [Benchmark report](results/benchmark/README.md)
 - [Raw results](results/benchmark/raw_results.md)
 - [Benchmark summary CSV](results/benchmark/benchmark_summary.csv)
-- [Benchmark script layout](experiments/discrete_optimization/benchmarks/README.md)
-- [Plotting script](plotting/plot_benchmark_comparison.py)
+- [Original plotting script](plotting/plot_benchmark_comparison.py)
+
+Those results should be treated as exploratory rather than as the final statistical comparison.
 
 ## Other experiments
 
@@ -153,4 +162,4 @@ pip install -r requirements.txt
 
 ## Notes
 
-The repository intentionally keeps older exploratory scripts under `legacy/` so that changes in the RealNVP optimization method remain traceable without cluttering the active benchmark code.
+Older exploratory scripts are intentionally preserved under `legacy/` so that changes in the RealNVP optimization method remain traceable without cluttering the active benchmark code.
