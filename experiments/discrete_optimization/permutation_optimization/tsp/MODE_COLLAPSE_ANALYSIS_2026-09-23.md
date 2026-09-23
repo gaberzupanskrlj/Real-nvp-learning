@@ -4,7 +4,7 @@
 
 The main result of today's work is that the current TSP-20 failure mode is no longer best described as "the model cannot find the optimum".
 
-On seed 44 the RealNVP search distribution **does find the known optimum** `3.513668846`, but the learned distribution later loses permutation diversity and collapses onto a worse tour basin. The original leave-one-out REINFORCE signal gives relatively little directional influence to the best samples during the critical phase, while the bulk of the batch often determines the parameter update. Rank shaping changes this behavior, but by itself does not solve the underlying loss of exploration.
+On seed 44 the RealNVP search distribution **does find the known optimum** `3.513668846`, but the learned distribution later loses permutation diversity and collapses onto a worse tour basin. The original leave-one-out REINFORCE diagnostics show small or opposing elite-group projections onto the total raw gradient at some critical epochs. These projections describe the current gradient, not Adam's actual parameter step, and do not by themselves establish that elite samples are underweighted. Rank shaping changes this behavior, but by itself does not solve the underlying loss of exploration.
 
 The strongest current interpretation is therefore:
 
@@ -59,7 +59,7 @@ This estimator is mathematically valid. The problem investigated today is not a 
 
 Seed 44 is the most informative failure case.
 
-The optimization process finds the global optimum as a best-ever solution, but the current sampling distribution later concentrates around a worse tour. The final checkpoint does not generate the optimum.
+The optimization process finds the global optimum as a best-ever solution, but the current sampling distribution later concentrates around a worse tour. The reported final test samples from the selected checkpoint do not include the optimum. This finite-sample observation does not establish that its probability is exactly zero.
 
 Final baseline seed-44 result:
 
@@ -89,14 +89,16 @@ The training batch is partitioned by tour quality into four disjoint groups:
 - `middle80`: middle 80%
 - `bottom10`: worst 10%
 
-For each group we compute its contribution to the original score-function gradient and project it onto the total update direction:
+For each group we compute its contribution to the original score-function loss gradient and project it onto the total raw gradient. For this decomposition, group contributions must use the same full-batch normalization so that they sum to `g_total`:
 
 ```text
 projection_share(group)
     = dot(g_group, g_total) / ||g_total||^2
 ```
 
-The four projection shares sum to approximately 1. A negative value means that group's gradient is partially opposed to the final total update direction.
+When `g_total` is nonzero, the four projection shares sum to approximately 1. A negative value means that group's raw gradient is partially opposed to the total raw gradient. These shares are projections, not probabilities, and may lie outside [0, 1]. They are undefined for a zero total gradient and can be sensitive to numerical error when its norm is very small.
+
+Adam combines gradient history with coordinate-wise second-moment scaling, so its actual parameter step generally differs from the current raw gradient direction. Record `delta_theta = theta_after_step - theta_before_step` separately before drawing conclusions about the optimizer's applied update. See the [PyTorch Adam algorithm](https://docs.pytorch.org/docs/2.14/generated/torch.optim.Adam.html).
 
 ### Critical seed-44 observations
 
@@ -111,11 +113,11 @@ The four projection shares sum to approximately 1. A negative value means that g
 | 550 | 3.5855 | 0.005 | +0.025 | +0.010 | +0.113 | **+0.853** |
 | 850 | 3.5741 | 0.001 | +0.003 | +0.004 | +0.010 | **+0.983** |
 
-At epoch 250, the best 1% of samples contributes only about **1% of the final gradient direction**, while the middle 80% contributes about **70%**.
+At epoch 250, the best 1% of samples has a projection share of about **1% of the total raw gradient**, while the middle 80% has a share of about **70%**. A group containing 1% of samples contributing 1% of this projection is not, by itself, evidence of insufficient weighting. Group size, gradient magnitude, alignment, and the intended optimization objective all matter.
 
-At epoch 300 the top 1% contribution is negative relative to the final update direction. This does **not** mean that good tours receive a negative reward. It means the gradient preferred by the elite samples is in conflict with the aggregate direction produced by the rest of the batch.
+At epoch 300 the top 1% contribution is negative relative to the total raw gradient. This does **not** mean that good tours receive a negative advantage; rewards themselves are already negative tour lengths. It means the elite group's raw gradient conflicts with the aggregate raw gradient. It does not directly establish how Adam's step changes the probability of an elite tour.
 
-Later, as the distribution concentrates, the update becomes dominated by rejecting the relatively poor tail rather than strongly pulling probability toward rare exceptional tours.
+Later, as the distribution concentrates, the bottom 10% accounts for most of the projection onto the total raw gradient. This is consistent with a signal dominated by penalizing the relatively poor tail, but it does not measure the change in discrete probability assigned to rare exceptional tours.
 
 ### Signal collapse
 
@@ -135,7 +137,7 @@ advantage -> 0
 gradient  -> 0
 ```
 
-For example at epoch 2050 the batch mean is exactly `3.573707`, the unique fraction is effectively zero, and the gradient is zero.
+For example at epoch 2050 the reported batch mean is `3.573707`, the displayed unique fraction rounds to zero, and the reported gradient is zero. One unique cycle in a batch of 4096 has fraction `1 / 4096`, not literally zero. With equal rewards, centered advantages vanish in exact arithmetic; floating-point residuals can remain. Adam's momentum can also produce a nonzero parameter step after the current raw gradient becomes zero.
 
 ### Interpretation
 
@@ -143,7 +145,7 @@ This supports the following descriptive sequence:
 
 1. the search distribution is initially broad;
 2. very good tours are discovered;
-3. individual elite discoveries have limited influence compared with the aggregate batch;
+3. elite-group gradients sometimes have small or opposing projections onto the aggregate raw gradient;
 4. the distribution concentrates in a large, reasonably good basin;
 5. diversity falls;
 6. better tours stop being sampled;
@@ -181,7 +183,7 @@ top1     = +0.422
 next9    = +0.490
 ```
 
-The top 10% therefore accounts for about 91% of the update direction at that point.
+The top 10% therefore accounts for about 91% of the projection onto the total raw gradient at that point, not necessarily 91% of Adam's parameter step.
 
 However, seed 44 **did not discover the global optimum** in this run. It quickly exploited the `3.522437` basin instead.
 
@@ -195,7 +197,7 @@ unique = 0.008
 
 ### Interpretation
 
-Rank shaping fixed one observed problem — weak elite influence — but created much stronger selection pressure and accelerated premature exploitation.
+Rank shaping increased elite-group projection shares and changed selection pressure. In this reported seed it was followed by earlier concentration on a suboptimal tour. This does not establish that the original weighting was incorrect or that increasing elite influence resolves the retention problem.
 
 Conclusion:
 
@@ -205,13 +207,13 @@ Conclusion:
 
 ## 5. Unique-cycle rank experiment V2
 
-The next hypothesis was that repeated samples of the same decoded permutation create a multiplicity bias.
+The next hypothesis was that repeated samples of already-common cycles reinforce concentration under the rank-weighted objective. This is a hypothesis about optimization dynamics, not an established bias in the original on-policy REINFORCE estimator.
 
-If a good local tour is sampled 1000 times, ordinary sample-based rank weighting effectively gives it 1000 votes. V2 therefore canonicalized TSP cycles under rotation and reversal and ranked **unique cycles** instead of raw samples.
+Repeated tours are expected when sampling from the learned distribution: their occurrence frequency reflects the probability mass assigned to them. Ordinary sample-based weighting includes every occurrence. V2 instead canonicalized TSP cycles under rotation and reversal and ranked **unique cycles** rather than raw samples.
 
-Each unique cycle received one total rank vote, split over all of its occurrences.
+Each unique cycle received one total rank vote, split over all of its occurrences. This reweights the sampled distribution and changes the training signal; it is not automatically a correction to an invalid estimator.
 
-### Early result: clear improvement in exploration
+### Early result: encouraging discovery in the reported seed
 
 This version rediscovered the global optimum by epoch 200:
 
@@ -223,9 +225,9 @@ unique = 0.669
 dom    = 0.012
 ```
 
-Compared with V1, this is strong evidence that multiplicity of already-dominant tours can accelerate premature concentration.
+Compared with V1, this is consistent with the hypothesis that multiplicity-sensitive weighting affects concentration. The single-seed comparison does not isolate multiplicity as the cause, particularly because V2 also uses the `B/U` normalization described below.
 
-### Late result: gradient-scale instability
+### Late result: large raw gradient norms
 
 V2 also multiplied the unique-cycle signal by `B / U` to keep the loss equivalent to an average over unique cycles.
 
@@ -239,7 +241,7 @@ epoch 750: grad ≈ 6226
 epoch 800: grad ≈ 2172
 ```
 
-Gradient clipping prevented the optimizer from literally applying these magnitudes, but the raw estimator became extremely unstable.
+These are large raw gradient norms. Clipping bounds the gradient passed to Adam, and Adam further transforms it using optimizer state. The reported norms therefore do not establish equally large or harmful parameter steps. Record clipping frequency and actual step norms before attributing optimization instability to the raw magnitudes.
 
 At epoch 750:
 
@@ -263,7 +265,7 @@ The distribution had fully collapsed to the `3.522438` mode.
 
 ### Interpretation
 
-V2 produced the most encouraging discovery behavior of the rank variants, but the full multiplicity correction plus `B/U` scaling introduced a severe late-stage gradient-scale problem.
+V2 showed encouraging discovery behavior in the reported seed and very large late-stage raw gradients. For a fixed batch, `B/U` directly amplifies the gradient, but these observations do not isolate its role in the eventual collapse from unique-cycle weighting, density-score magnitudes, and optimizer dynamics.
 
 This is useful, but still not a complete solution.
 
@@ -299,7 +301,7 @@ dom    = 0.022
 grad   = 3.75
 ```
 
-The catastrophic V2 gradient explosion was largely avoided, but convergence became slower and less attractive:
+The very large raw gradient norms reported for V2 were largely avoided, while concentration developed more slowly in this run:
 
 ```text
 epoch 700:  mean = 3.649169, dom = 0.484
@@ -311,7 +313,7 @@ epoch 1100: mean = 3.543872, dom = 0.890
 
 V3 changed two things relative to V2 — multiplicity weighting and global signal scaling — so it is not a clean ablation of the V2 failure.
 
-The experiment nevertheless shows that simply interpolating the multiplicity exponent is unlikely to be a satisfying research answer.
+The experiment does not identify whether multiplicity weighting or signal scaling explains the difference. It therefore motivates a controlled ablation rather than selecting a multiplicity exponent from this run alone.
 
 ---
 
@@ -323,9 +325,17 @@ A cleaner V2.1 was prepared:
 - keep rank temperature `0.10`;
 - remove only the `B/U` amplification.
 
-For a fixed batch, removing `B/U` preserves the V2 gradient direction and changes only its scale.
+For a fixed batch with weights treated as detached, removing `B/U` preserves the raw V2 gradient direction and changes only its scale. That does not imply identical Adam steps or training trajectories: clipping and optimizer history must also be considered.
 
-This is a much cleaner test than V3.
+If this ablation is run, compare V2 and V2.1 with identical initialization, architecture, rank temperature, checkpoint rule, and objective-evaluation budget. Record:
+
+- raw gradient norm and the fraction of updates that activate clipping;
+- gradient norm after clipping;
+- actual parameter-step norm, `||theta_after_step - theta_before_step||`;
+- unique-cycle count and dominant-cycle share at a fixed diagnostic sample size;
+- best-ever tour length, sampled tour quality, and sampling frequency of previously discovered good tours.
+
+Use matched seeds and account for any diagnostic evaluations used to make optimization decisions. This is a cleaner test of gradient scaling than V3, not a commitment to rank weighting as the final method.
 
 However, after reviewing the supervisor's thesis chapter, the decision is to **pause further tuning until supervisor input**, rather than continue a chain of local fixes without a clear methodological target.
 
@@ -373,10 +383,10 @@ Different versions of the same general RealNVP + discretization idea show the sa
 - RealNVP can discover the global optimum on the fixed TSP-20 instance.
 - Discovery does not guarantee that the final learned distribution retains probability mass on that optimum.
 - Permutation diversity can collapse rapidly.
-- In the original REINFORCE estimator, the top 1% of the batch can have very small or even conflicting directional influence during the critical phase.
-- Rank shaping strongly increases elite influence.
+- In the original REINFORCE estimator, the top 1% can have small or opposing projections onto the total raw gradient during the critical phase.
+- Rank shaping increases elite-group projection shares in the reported comparison.
 - Stronger rank selection can accelerate premature exploitation.
-- Correcting multiplicity across repeated tours changes the behavior materially.
+- Reweighting repeated tours by cycle multiplicity changes the observed behavior; this is not evidence that ordinary on-policy sampling is biased.
 - Full unique-cycle correction with `B/U` scaling can produce extremely large raw gradients.
 - Once the batch collapses to a single objective value, centered score-function signals vanish.
 
@@ -384,6 +394,8 @@ Different versions of the same general RealNVP + discretization idea show the sa
 
 - We have **not** proven that the original REINFORCE estimator is fundamentally unsuitable.
 - We have **not** proven that rank weighting is the correct replacement.
+- We have **not** established that small elite projection shares imply insufficient weighting, or that those shares describe Adam's actual step.
+- We have **not** isolated `B/U` scaling as the cause of collapse or established harmful parameter-step sizes from raw gradient norms.
 - We have **not** shown that a particular entropy, KL, mutation, mixture or off-policy method will solve the problem.
 - We have **not** established that the random-key `argsort` representation itself is the fundamental cause.
 - A single seed is useful diagnostically but is not enough for a final algorithmic claim.
@@ -401,7 +413,20 @@ Do **not** continue blindly tuning:
 - multiplicity exponent;
 - arbitrary reward scaling.
 
-The next step should be a short technical discussion with the supervisor.
+The next step should be a short technical discussion with the supervisor, centered on this question:
+
+> **How can we maintain access to alternative tours while still concentrating probability on good solutions?**
+
+The reported rank experiments make exploration control a stronger next direction than simply increasing elite or archive weights. Retention and exploration remain hypotheses to test through one clearly specified mechanism at a time.
+
+For an exploration mixture, define the learning rule before implementation:
+
+- **Exploration for discovery only:** external samples can improve the stored best tour, but do not directly train the flow if they are excluded from its update.
+- **Exploration used for learning:** specify the target objective, the distribution that generated the candidates, and a valid estimator or explicit auxiliary fitting objective. External samples must not silently be treated as fresh draws from the current flow. Importance weighting is one possible approach, not an automatic requirement for every possible formulation.
+
+Also specify whether exploration is introduced in latent space, continuous key space, or permutation space; these are different interventions. Evaluate diversity after decoding. Increased continuous entropy alone need not increase tour diversity, since positive scaling of all keys preserves their ordering.
+
+Keep the baseline fixed and use the same total objective-evaluation budget. Record best-ever quality separately from generator quality. A primary success criterion should be whether the proposed mechanism preserves or improves the sampling frequency of previously discovered good tours (or a predefined quality threshold) without sacrificing search quality. Estimate this with fixed-size independent probes; count probes in the optimization budget when they influence decisions. A finite probe with no hits does not prove zero probability.
 
 ### Questions to resolve with the supervisor
 
@@ -444,10 +469,11 @@ The next experiment should therefore be selected to test a **principled explorat
 
 ### Keep as diagnostics
 
-- gradient contribution split: top 1%, next 9%, middle 80%, bottom 10%;
+- raw-gradient contribution split: top 1%, next 9%, middle 80%, bottom 10%;
 - unique-tour fraction;
 - dominant-cycle fraction;
-- raw gradient norm;
+- raw gradient norm; add post-clipping norms, clipping frequency, and actual parameter-step norms when testing V2.1;
+- sampling frequency of previously discovered good tours, measured with a fixed probe budget;
 - best-sample signal;
 - validation elite / validation best.
 
