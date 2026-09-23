@@ -58,3 +58,16 @@ On the fixed TSP-20 instance, RealNVP reached the reference optimum in 3/10 runs
 The fast inversion implementation uses the fact that an inversion changes only two boundary edges in a symmetric TSP. Its `best_found_eval` therefore counts candidate inversion moves, not full black-box objective recomputations. Use this distinction when making runtime or evaluation-cost claims.
 
 Detailed results are stored under `results/permutation_optimization/tsp20/`.
+
+
+## Mode-collapse investigation — 2026-09-23
+
+A focused investigation of the current TSP-20 failure mode is documented in
+[`MODE_COLLAPSE_ANALYSIS_2026-09-23.md`](MODE_COLLAPSE_ANALYSIS_2026-09-23.md).
+
+Main status: the larger RealNVP setup can discover the global optimum, but the
+learned sampling distribution may later lose permutation diversity and collapse
+onto a worse tour basin. Gradient-signal diagnostics and several rank-based
+interventions were tested. The current decision is to pause further ad-hoc
+weight tuning and obtain supervisor input before choosing a principled
+exploration / mode-collapse mitigation strategy.
