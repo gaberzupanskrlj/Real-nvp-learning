@@ -1,0 +1,3 @@
+method,seeds,optimum_hits,mean_best_cost,median_best_cost,std_best_cost,mean_best_gap_percent,mean_best_found_eval,mean_final_cost,mean_retention_loss,median_retention_loss,mean_final_unique_permutations,median_final_unique_permutations
+realnvp_baseline,10,0,2805.8,2795.0,38.0888435109285,9.175097274780274,681192.4,2871.8185302734373,66.0,70.0,4.2,4.0
+realnvp_annealed_kl,10,0,2794.8,2786.0,32.572380938457655,8.747081899642945,1627101.1,2838.14404296875,43.2,44.0,11.2,11.0
