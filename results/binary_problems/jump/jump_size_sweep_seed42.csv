@@ -1,0 +1,9 @@
+jump_size,local_optimum,best_objective,max_correct_ever,target_hit,target_evaluation,final_test_mean,final_test_max_correct
+2,98,100,100,true,238592,87.250793,99
+4,96,100,100,true,239616,86.472229,99
+5,95,100,100,true,245760,85.519165,99
+6,94,100,100,true,245760,84.143311,99
+7,93,93,99,false,,92.994019,94
+8,92,92,98,false,,91.999878,92
+16,84,84,94,false,,83.994568,85
+25,75,75,88,false,,74.999268,75
