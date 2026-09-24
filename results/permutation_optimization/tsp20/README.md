@@ -63,5 +63,5 @@ The current tables should therefore be read primarily as **solution-quality, rel
 
 ## Related documentation
 
-- [TSP experiment overview](../../../experiments/discrete_optimization/permutation_optimization/tsp/README.md)
-- [Mode-collapse investigation](../../../experiments/discrete_optimization/permutation_optimization/tsp/diagnostics/MODE_COLLAPSE_ANALYSIS_2026-09-23.md)
+- [TSP experiment overview](../../../experiments/discrete_optimization/benchmarks/permutation/tsp/README.md)
+- [Mode-collapse investigation](../../../experiments/discrete_optimization/legacy/permutation_optimization_old/tsp/diagnostics/MODE_COLLAPSE_ANALYSIS_2026-09-23.md)

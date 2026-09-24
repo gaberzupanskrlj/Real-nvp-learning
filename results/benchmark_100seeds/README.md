@@ -90,13 +90,13 @@ From the repository root, activate the environment and run a problem-specific Re
 
 ```bash
 source .venv/bin/activate
-python -u experiments/discrete_optimization/benchmarks/realnvp/onemax_100seeds.py
+python -u experiments/discrete_optimization/benchmarks/binary/ioh/realnvp/onemax_100seeds.py
 ```
 
 Run the matching (1+1)-EA benchmark:
 
 ```bash
-python -u experiments/discrete_optimization/benchmarks/baselines/onemax_100seeds.py
+python -u experiments/discrete_optimization/benchmarks/binary/ioh/baselines/onemax_100seeds.py
 ```
 
 Replace `onemax` with:

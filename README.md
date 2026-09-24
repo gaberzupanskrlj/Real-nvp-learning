@@ -80,10 +80,10 @@ The TSP work is organized around a reproducible frozen RealNVP baseline, a class
 
 The main TSP entry points are:
 
-- [TSP experiment overview](experiments/discrete_optimization/permutation_optimization/tsp/README.md)
+- [TSP experiment overview](experiments/discrete_optimization/benchmarks/permutation/tsp/README.md)
 - [TSP-20 results](results/permutation_optimization/tsp20/README.md)
 - [Machine-readable TSP summary](results/permutation_optimization/tsp20/summary.csv)
-- [Mode-collapse investigation](experiments/discrete_optimization/permutation_optimization/tsp/diagnostics/MODE_COLLAPSE_ANALYSIS_2026-09-23.md)
+- [Mode-collapse investigation](experiments/discrete_optimization/legacy/permutation_optimization_old/tsp/diagnostics/MODE_COLLAPSE_ANALYSIS_2026-09-23.md)
 
 New TSP methods should be added under descriptive method names rather than temporary version numbers, so the main research story stays readable while exploratory work remains archived.
 
