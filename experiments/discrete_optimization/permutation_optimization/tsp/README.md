@@ -1,27 +1,42 @@
 # TSP permutation optimization
 
-This folder contains the first permutation-valued experiments for the discrete RealNVP project.
+This directory contains the permutation-valued part of the RealNVP optimization project.
 
-The problem is a symmetric Euclidean Traveling Salesman Problem (TSP). City coordinates are sampled once in the unit square and kept fixed with `TSP_INSTANCE_SEED = 12345`.
+The benchmark problem is a **symmetric Euclidean TSP with 20 cities**. City coordinates are sampled once in the unit square and kept fixed with `TSP_INSTANCE_SEED = 12345`.
 
 ## Representation
 
-RealNVP stays continuous. A generated vector `y` is converted into a valid permutation with a random-key decoder:
+RealNVP remains continuous. A generated vector `y` is decoded into a valid permutation using random keys:
 
 ```python
 tour = torch.argsort(y, dim=1)
 ```
 
-The TSP objective is the length of the closed tour. Training uses reward `-tour_length` with the same REINFORCE / leave-one-out baseline used in the binary experiments.
+The objective is the closed-tour length. The frozen RealNVP baseline uses reward `-tour_length` with a REINFORCE-style score-function estimator and a leave-one-out baseline.
 
-## Files
+## Active structure
 
-- `realnvp_tsp.py` — single RealNVP TSP-20 run with convergence and tour plots.
-- `realnvp_tsp_10seeds.py` — RealNVP TSP-20 experiment for seeds 42–51.
-- `inversion_baseline_10seeds.py` — simple elitist inversion local-search baseline for seeds 42–51.
-- `simple_tsp_baseline.py` — initial TSP-10 sanity-check baseline kept for reference.
+```text
+tsp/
+├── README.md
+├── realnvp_tsp_baseline_v1.py
+├── baselines/
+│   └── inversion_baseline_10seeds.py
+├── diagnostics/
+│   └── MODE_COLLAPSE_ANALYSIS_2026-09-23.md
+└── archive/
+    └── legacy/
+        ├── README.md
+        ├── realnvp_tsp.py
+        ├── realnvp_tsp_10seeds.py
+        └── simple_tsp_baseline.py
+```
 
-## Current TSP-20 setup
+### Authoritative baseline
+
+`realnvp_tsp_baseline_v1.py` is the frozen reference implementation. It should not be modified when testing new ideas.
+
+Baseline configuration:
 
 | Parameter | Value |
 |---|---:|
@@ -32,42 +47,59 @@ The TSP objective is the length of the closed tour. Training uses reward `-tour_
 | Batch size | 1024 |
 | Epochs | 2000 |
 | Learning rate | 1e-4 |
-| Training seeds | 42–51 |
 | Reference optimum | 3.513668846 |
+
+### Classical reference
+
+`baselines/inversion_baseline_10seeds.py` runs an elitist inversion local-search baseline for seeds 42–51.
+
+Its fast delta evaluation counts candidate inversion moves rather than full black-box tour recomputations, so its evaluation count should not be interpreted as directly equivalent to RealNVP's sampled-tour count.
+
+### Diagnostics
+
+`diagnostics/MODE_COLLAPSE_ANALYSIS_2026-09-23.md` records the focused investigation that showed an important distinction:
+
+> RealNVP can discover the global optimum, while the learned sampling distribution can later lose diversity and concentrate around a worse tour basin.
+
+The document separates established observations from hypotheses and keeps the exploratory rank/multiplicity interventions out of the main method list.
+
+## Current published TSP-20 result
+
+Across the existing 10-seed comparison:
+
+| Metric | RealNVP baseline | Inversion baseline |
+|---|---:|---:|
+| Seeds | 10 | 10 |
+| Global optimum hits | 3/10 | 4/10 |
+| Mean best length | 3.586519 | 3.524057 |
+| Std best length | 0.211928 | 0.017981 |
+| Median best length | 3.522437 | 3.522437 |
+| Best run | 3.513669 | 3.513669 |
+| Worst run | 4.189561 | 3.573708 |
+| Mean optimality gap | 2.0733% | 0.2956% |
+
+Detailed results are under [`results/permutation_optimization/tsp20/`](../../../../results/permutation_optimization/tsp20/).
 
 ## Run
 
 From the repository root:
 
 ```bash
-python experiments/discrete_optimization/permutation_optimization/tsp/realnvp_tsp.py
+python experiments/discrete_optimization/permutation_optimization/tsp/realnvp_tsp_baseline_v1.py
 ```
 
 ```bash
-python experiments/discrete_optimization/permutation_optimization/tsp/realnvp_tsp_10seeds.py
+python experiments/discrete_optimization/permutation_optimization/tsp/baselines/inversion_baseline_10seeds.py
 ```
 
-```bash
-python experiments/discrete_optimization/permutation_optimization/tsp/inversion_baseline_10seeds.py
+## Naming rule for new experiments
+
+New methods should use descriptive names based on the intervention, not scratch version numbers. For example:
+
+```text
+realnvp_tsp_<method_name>.py
 ```
 
-## Current result
+Each method should keep the frozen problem definition and clearly document which training, exploration, checkpointing or regularization choice changed.
 
-On the fixed TSP-20 instance, RealNVP reached the reference optimum in 3/10 runs. The inversion baseline reached it in 4/10 runs. Both had median best tour length `3.522437`, while the inversion baseline was substantially more stable across seeds.
-
-The fast inversion implementation uses the fact that an inversion changes only two boundary edges in a symmetric TSP. Its `best_found_eval` therefore counts candidate inversion moves, not full black-box objective recomputations. Use this distinction when making runtime or evaluation-cost claims.
-
-Detailed results are stored under `results/permutation_optimization/tsp20/`.
-
-
-## Mode-collapse investigation — 2026-09-23
-
-A focused investigation of the current TSP-20 failure mode is documented in
-[`MODE_COLLAPSE_ANALYSIS_2026-09-23.md`](MODE_COLLAPSE_ANALYSIS_2026-09-23.md).
-
-Main status: the larger RealNVP setup can discover the global optimum, but the
-learned sampling distribution may later lose permutation diversity and collapse
-onto a worse tour basin. Gradient-signal diagnostics and several rank-based
-interventions were tested. The current decision is to pause further ad-hoc
-weight tuning and obtain supervisor input before choosing a principled
-exploration / mode-collapse mitigation strategy.
+Exploratory or superseded scripts should be moved to an archive rather than left beside the active methods.
