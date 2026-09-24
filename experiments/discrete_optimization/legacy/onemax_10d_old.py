@@ -227,7 +227,7 @@ best_mean = -1
 best_state = None
 for epoch in range(EPOCHS):
 
-  
+
 
     if torch.rand(1).item() < EXPLORATION_RATE:
 
@@ -247,7 +247,7 @@ for epoch in range(EPOCHS):
 
 
     y, log_det_forward = model(r)
-    
+
 
 
     with torch.no_grad():
@@ -259,7 +259,7 @@ for epoch in range(EPOCHS):
         reward = objective / DIMENSION
 
 
-   
+
 
     loss = (
         -(reward * log_det_forward).mean()
@@ -280,7 +280,6 @@ for epoch in range(EPOCHS):
 
 
     optimizer.step()
-
 
 
 

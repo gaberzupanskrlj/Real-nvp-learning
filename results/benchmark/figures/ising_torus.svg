@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="560" viewBox="0 0 900 560">
+  <rect width="900" height="560" fill="#ffffff"/>
+  <style>
+    text { font-family: Inter, Segoe UI, Arial, sans-serif; fill: #172033; }
+    .title { font-size: 27px; font-weight: 700; }
+    .sub { font-size: 14px; fill: #64748b; }
+    .label { font-size: 16px; font-weight: 600; }
+    .tick { font-size: 13px; fill: #64748b; }
+    .value { font-size: 14px; font-weight: 600; }
+  </style>
+  <text x="60" y="55" class="title">IsingTorus 100D</text>
+  <text x="60" y="82" class="sub">Mean best objective ± 1 SD · global optimum = 200</text>
+
+  <g stroke="#e2e8f0" stroke-width="1">
+    <line x1="120" y1="460" x2="820" y2="460"/>
+    <line x1="120" y1="402" x2="820" y2="402"/>
+    <line x1="120" y1="344" x2="820" y2="344"/>
+    <line x1="120" y1="286" x2="820" y2="286"/>
+    <line x1="120" y1="228" x2="820" y2="228"/>
+    <line x1="120" y1="170" x2="820" y2="170"/>
+  </g>
+
+  <text x="105" y="465" text-anchor="end" class="tick">150</text>
+  <text x="105" y="407" text-anchor="end" class="tick">160</text>
+  <text x="105" y="349" text-anchor="end" class="tick">170</text>
+  <text x="105" y="291" text-anchor="end" class="tick">180</text>
+  <text x="105" y="233" text-anchor="end" class="tick">190</text>
+  <text x="105" y="175" text-anchor="end" class="tick">200</text>
+
+  <line x1="120" y1="170" x2="820" y2="170" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 6"/>
+  <text x="810" y="157" text-anchor="end" class="sub">global optimum</text>
+
+  <line x1="350" y1="284" x2="350" y2="365" stroke="#2563eb" stroke-width="3"/>
+  <line x1="338" y1="284" x2="362" y2="284" stroke="#2563eb" stroke-width="3"/>
+  <line x1="338" y1="365" x2="362" y2="365" stroke="#2563eb" stroke-width="3"/>
+  <circle cx="350" cy="325" r="10" fill="#2563eb"/>
+  <text x="350" y="255" text-anchor="middle" class="value">173.33 ± 7.02</text>
+  <text x="350" y="500" text-anchor="middle" class="label">RealNVP</text>
+  <text x="350" y="523" text-anchor="middle" class="sub">best = 180 · n = 3</text>
+
+  <line x1="650" y1="149" x2="650" y2="261" stroke="#f59e0b" stroke-width="3"/>
+  <line x1="638" y1="149" x2="662" y2="149" stroke="#f59e0b" stroke-width="3"/>
+  <line x1="638" y1="261" x2="662" y2="261" stroke="#f59e0b" stroke-width="3"/>
+  <rect x="641" y="196" width="18" height="18" rx="2" fill="#f59e0b"/>
+  <text x="650" y="125" text-anchor="middle" class="value">194.0 ± 9.66</text>
+  <text x="650" y="500" text-anchor="middle" class="label">(1+1)-EA</text>
+  <text x="650" y="523" text-anchor="middle" class="sub">best = 200 · n = 10</text>
+</svg>

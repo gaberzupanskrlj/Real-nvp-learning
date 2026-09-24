@@ -1,0 +1,19 @@
+{
+  "problem": "LeadingOnes",
+  "runs": 100,
+  "mean_best": 77.3,
+  "std_best": 12.35624407644846,
+  "median_best": 78.5,
+  "best_run": 100.0,
+  "worst_run": 35.0,
+  "mean_training_seconds": 814.8776379940938,
+  "std_training_seconds": 98.36430652239991,
+  "median_training_seconds": 798.4688021960319,
+  "target": 100.0,
+  "target_hits": 1,
+  "target_hit_rate": 0.01,
+  "mean_evaluations_to_target": 3235840.0,
+  "median_evaluations_to_target": 3235840.0,
+  "mean_time_to_target_seconds": 847.8228893460473,
+  "median_time_to_target_seconds": 847.8228893460473
+}

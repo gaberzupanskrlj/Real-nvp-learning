@@ -1,0 +1,14 @@
+{
+  "problem": "NKLandscapes",
+  "runs": 100,
+  "mean_best": -0.29265055789009237,
+  "std_best": 0.0009286137937628907,
+  "median_best": -0.2928002741992475,
+  "best_run": -0.2920664942739842,
+  "worst_run": -0.2974069166590492,
+  "mean_training_seconds": 67.3140963480447,
+  "std_training_seconds": 2.7145780324313042,
+  "median_training_seconds": 66.77386750845471,
+  "mean_evaluations_used": 4096000.0,
+  "median_evaluations_used": 4096000.0
+}

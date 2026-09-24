@@ -1,0 +1,4 @@
+method,seeds,mean_test_mean,std_test_mean,median_test_mean,final_test_optimum_presence_hits,final_mode_optimum_hits,mean_optimal_test_share_percent
+realnvp_baseline_v1,10,3.701836,0.232455,3.583621,0,,
+cosine_elite,10,3.746350,0.251125,3.721766,3,,
+annealed_kl,10,3.524477,0.005491,3.523876,1,1,9.8956

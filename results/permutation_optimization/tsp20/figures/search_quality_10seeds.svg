@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="470" viewBox="0 0 760 470">
+<rect width="100%" height="100%" fill="white"/>
+<text x="380" y="30" text-anchor="middle" font-family="sans-serif" font-size="20">TSP-20 search quality across 10 seeds</text>
+<line x1="95" y1="60" x2="95" y2="380" stroke="black"/>
+<line x1="95" y1="380" x2="730" y2="380" stroke="black"/>
+<text x="22" y="220" transform="rotate(-90 22 220)" text-anchor="middle" font-family="sans-serif" font-size="14">Best-ever tour length</text>
+<line x1="90" y1="380" x2="730" y2="380" stroke="#dddddd"/><text x="85" y="384" text-anchor="end" font-family="sans-serif" font-size="12">3.324</text>
+<line x1="90" y1="300" x2="730" y2="300" stroke="#dddddd"/><text x="85" y="304" text-anchor="end" font-family="sans-serif" font-size="12">3.455</text>
+<line x1="90" y1="220" x2="730" y2="220" stroke="#dddddd"/><text x="85" y="224" text-anchor="end" font-family="sans-serif" font-size="12">3.587</text>
+<line x1="90" y1="140" x2="730" y2="140" stroke="#dddddd"/><text x="85" y="144" text-anchor="end" font-family="sans-serif" font-size="12">3.718</text>
+<line x1="90" y1="60" x2="730" y2="60" stroke="#dddddd"/><text x="85" y="64" text-anchor="end" font-family="sans-serif" font-size="12">3.849</text>
+<line x1="95" y1="264.354780260125" x2="730" y2="264.354780260125" stroke="black" stroke-dasharray="6 5"/><text x="726" y="257.354780260125" text-anchor="end" font-family="sans-serif" font-size="12">reference optimum</text>
+<line x1="209.3" y1="349.0322580645161" x2="209.3" y2="90.9677419354839" stroke="black" stroke-width="2"/>
+<line x1="201.3" y1="349.0322580645161" x2="217.3" y2="349.0322580645161" stroke="black" stroke-width="2"/>
+<line x1="201.3" y1="90.9677419354839" x2="217.3" y2="90.9677419354839" stroke="black" stroke-width="2"/>
+<circle cx="209.3" cy="220" r="6" fill="black"/>
+<text x="209.3" y="410" text-anchor="middle" font-family="sans-serif" font-size="13">Baseline</text>
+<text x="209.3" y="208" text-anchor="middle" font-family="sans-serif" font-size="11">3.586519</text>
+<line x1="412.5" y1="265.53828993657" x2="412.5" y2="261.0364566907082" stroke="black" stroke-width="2"/>
+<line x1="404.5" y1="265.53828993657" x2="420.5" y2="265.53828993657" stroke="black" stroke-width="2"/>
+<line x1="404.5" y1="261.0364566907082" x2="420.5" y2="261.0364566907082" stroke="black" stroke-width="2"/>
+<circle cx="412.5" cy="263.2873733136391" r="6" fill="black"/>
+<text x="412.5" y="410" text-anchor="middle" font-family="sans-serif" font-size="13">Cosine + elite</text>
+<text x="412.5" y="251.28737331363908" text-anchor="middle" font-family="sans-serif" font-size="11">3.515422</text>
+<line x1="615.6999999999999" y1="264.3546864973009" x2="615.6999999999999" y2="264.3546864973009" stroke="black" stroke-width="2"/>
+<line x1="607.6999999999999" y1="264.3546864973009" x2="623.6999999999999" y2="264.3546864973009" stroke="black" stroke-width="2"/>
+<line x1="607.6999999999999" y1="264.3546864973009" x2="623.6999999999999" y2="264.3546864973009" stroke="black" stroke-width="2"/>
+<circle cx="615.6999999999999" cy="264.3546864973009" r="6" fill="black"/>
+<text x="615.6999999999999" y="410" text-anchor="middle" font-family="sans-serif" font-size="13">Annealed KL</text>
+<text x="615.6999999999999" y="252.35468649730092" text-anchor="middle" font-family="sans-serif" font-size="11">3.513669</text>
+<text x="380" y="452" text-anchor="middle" font-family="sans-serif" font-size="12">Mean ± sample standard deviation across seeds 42–51</text></svg>

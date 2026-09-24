@@ -1,0 +1,15 @@
+{
+  "problem": "ConcatenatedTrap",
+  "runs": 100,
+  "mean_best": 16.002000007629395,
+  "std_best": 0.020000076293945304,
+  "median_best": 16.0,
+  "best_run": 16.200000762939453,
+  "worst_run": 16.0,
+  "mean_training_seconds": 161.3582334208279,
+  "std_training_seconds": 7.76968876765642,
+  "median_training_seconds": 160.78244031051872,
+  "target": 20.0,
+  "target_hits": 0,
+  "target_hit_rate": 0.0
+}
