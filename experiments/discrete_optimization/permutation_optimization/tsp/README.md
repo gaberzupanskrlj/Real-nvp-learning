@@ -12,7 +12,7 @@ RealNVP remains continuous. A generated vector `y` is decoded into a valid permu
 tour = torch.argsort(y, dim=1)
 ```
 
-The objective is the closed-tour length. The frozen RealNVP baseline uses reward `-tour_length` with a REINFORCE-style score-function estimator and a leave-one-out baseline.
+The objective is the closed-tour length.
 
 ## Active structure
 
@@ -20,6 +20,9 @@ The objective is the closed-tour length. The frozen RealNVP baseline uses reward
 tsp/
 ├── README.md
 ├── realnvp_tsp_baseline_v1.py
+├── realnvp_tsp_cosine_elite.py
+├── realnvp_tsp_kl.py
+├── plot_method_comparison.py
 ├── baselines/
 │   └── inversion_baseline_10seeds.py
 ├── diagnostics/
@@ -32,53 +35,59 @@ tsp/
         └── simple_tsp_baseline.py
 ```
 
-### Authoritative baseline
+## Methods
 
-`realnvp_tsp_baseline_v1.py` is the frozen reference implementation. It should not be modified when testing new ideas.
+### Frozen RealNVP baseline
 
-Baseline configuration:
+`realnvp_tsp_baseline_v1.py` is the immutable reference implementation:
 
-| Parameter | Value |
-|---|---:|
-| Cities | 20 |
-| Instance seed | 12345 |
-| RealNVP layers | 4 |
-| Hidden dimension | 64 |
-| Batch size | 1024 |
-| Epochs | 2000 |
-| Learning rate | 1e-4 |
-| Reference optimum | 3.513668846 |
+- 4 coupling layers
+- hidden dimension 64
+- batch size 1024
+- 2000 epochs
+- fixed learning rate `1e-4`
+- Gaussian base
+- leave-one-out REINFORCE
+- standardized advantage
+- validation-mean checkpoint
+
+### Cosine LR + elite checkpoint
+
+`realnvp_tsp_cosine_elite.py` tests two interventions:
+
+- 8-layer / batch-4096 diagnostic-capacity setup
+- cosine learning-rate decay `1e-4 -> 1e-5`
+- checkpoint selected using the best 1% of validation samples
+
+Across 10 seeds it discovers the reference optimum in **8/10** runs, but final generator quality is unstable.
+
+### Annealed KL
+
+`realnvp_tsp_kl.py` adds an annealed KL regularizer to the REINFORCE objective:
+
+```text
+loss = reinforce_loss + T * KL(q_theta || N(0, I))
+T: 0.1 -> 0.001
+```
+
+Across 10 seeds it discovers the reference optimum in **10/10** runs and gives a much more stable final generator, but the final distribution retains the optimum as its mode in only **1/10** runs.
 
 ### Classical reference
 
-`baselines/inversion_baseline_10seeds.py` runs an elitist inversion local-search baseline for seeds 42–51.
+`baselines/inversion_baseline_10seeds.py` is an elitist inversion local-search baseline.
 
-Its fast delta evaluation counts candidate inversion moves rather than full black-box tour recomputations, so its evaluation count should not be interpreted as directly equivalent to RealNVP's sampled-tour count.
+Its fast delta evaluation counts candidate inversion moves rather than full black-box tour recomputations, so its evaluation count is not directly equivalent to RealNVP sampled-tour evaluations.
 
-### Diagnostics
+## Main conclusion so far
 
-`diagnostics/MODE_COLLAPSE_ANALYSIS_2026-09-23.md` records the focused investigation that showed an important distinction:
+The experiments separate two behaviors:
 
-> RealNVP can discover the global optimum, while the learned sampling distribution can later lose diversity and concentrate around a worse tour basin.
+1. **discovery** — whether training ever finds the global optimum;
+2. **retention** — whether the learned generator assigns substantial final probability mass to that optimum.
 
-The document separates established observations from hypotheses and keeps the exploratory rank/multiplicity interventions out of the main method list.
+Cosine + elite improves discovery but is unstable at retention. Annealed KL reaches 10/10 discovery and stabilizes the final generator, but 9/10 runs still concentrate on the same near-optimal basin around length `3.522437`.
 
-## Current published TSP-20 result
-
-Across the existing 10-seed comparison:
-
-| Metric | RealNVP baseline | Inversion baseline |
-|---|---:|---:|
-| Seeds | 10 | 10 |
-| Global optimum hits | 3/10 | 4/10 |
-| Mean best length | 3.586519 | 3.524057 |
-| Std best length | 0.211928 | 0.017981 |
-| Median best length | 3.522437 | 3.522437 |
-| Best run | 3.513669 | 3.513669 |
-| Worst run | 4.189561 | 3.573708 |
-| Mean optimality gap | 2.0733% | 0.2956% |
-
-Detailed results are under [`results/permutation_optimization/tsp20/`](../../../../results/permutation_optimization/tsp20/).
+Detailed 10-seed results and comparison figures are under [the TSP-20 results directory](../../../../results/permutation_optimization/tsp20/).
 
 ## Run
 
@@ -89,17 +98,17 @@ python experiments/discrete_optimization/permutation_optimization/tsp/realnvp_ts
 ```
 
 ```bash
-python experiments/discrete_optimization/permutation_optimization/tsp/baselines/inversion_baseline_10seeds.py
+python experiments/discrete_optimization/permutation_optimization/tsp/realnvp_tsp_cosine_elite.py --seeds 42 43 44 45 46 47 48 49 50 51
 ```
 
-## Naming rule for new experiments
-
-New methods should use descriptive names based on the intervention, not scratch version numbers. For example:
-
-```text
-realnvp_tsp_<method_name>.py
+```bash
+python experiments/discrete_optimization/permutation_optimization/tsp/realnvp_tsp_kl.py
 ```
 
-Each method should keep the frozen problem definition and clearly document which training, exploration, checkpointing or regularization choice changed.
+To regenerate the method-level comparison figures:
 
-Exploratory or superseded scripts should be moved to an archive rather than left beside the active methods.
+```bash
+python experiments/discrete_optimization/permutation_optimization/tsp/plot_method_comparison.py
+```
+
+Exploratory or superseded scripts should be kept in an archive rather than mixed with the active methods.

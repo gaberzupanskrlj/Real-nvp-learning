@@ -1,3 +1,5 @@
 method,seeds,mean_best,std_best,median_best,best,worst,optimum_hits,mean_gap_percent
 realnvp_baseline_v1,10,3.586519,0.211928,3.522437,3.513669,4.189561,3,2.0733
 inversion_baseline,10,3.524057,0.017981,3.522437,3.513669,3.573708,4,0.2956
+cosine_elite,10,3.515422,0.003697,3.513669,3.513669,3.522438,8,0.0499
+annealed_kl,10,3.513669,0.000000,3.513669,3.513669,3.513669,10,0.0000
