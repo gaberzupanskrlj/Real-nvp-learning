@@ -36,3 +36,4 @@ Thumbs.db
 # Large per-seed benchmark traces
 results/benchmark_100seeds/realnvp/*/seed_*/
 results/benchmark_100seeds/one_plus_one_ea/*/seed_*/
+.venv-k80/
