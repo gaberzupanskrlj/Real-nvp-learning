@@ -34,6 +34,20 @@ Annealed KL is the strongest of the three RealNVP variants for discovery and fin
 
 Cosine + elite reaches the optimum in 8/10 runs, but its final generator is much less stable: finding a good tour is not sufficient for the selected checkpoint to generate it reliably.
 
+## Gaussian exploration ablation
+
+A separate 10-seed sweep tested fixed output-space Gaussian exploration at epsilon `0.00`, `0.10` and `0.25` using the frozen 4-layer, hidden-64, batch-1024 setup.
+
+| Epsilon | Optimum hits | Mean final test mean | Mean final flow uniqueness |
+|---:|---:|---:|---:|
+| 0.00 | 4/10 | 3.725264 | 0.003320 |
+| 0.10 | 5/10 | 3.689891 | 0.024403 |
+| 0.25 | 5/10 | 4.129849 | 0.225391 |
+
+Gaussian exploration clearly preserves more flow diversity, but the improvement in optimum discovery is small and high exploration substantially worsens mean generator quality. The completed annealed-KL experiment remains stronger on observed search reliability and final-generator quality, although the two experiments do not use matched optimization budgets.
+
+Full per-seed data and aggregate statistics are in [`gaussian_exploration/`](gaussian_exploration/README.md).
+
 ## Figures
 
 ![Search quality across 10 seeds](figures/search_quality_10seeds.svg)
@@ -51,6 +65,7 @@ A true 10-seed mean±std convergence curve is intentionally not reconstructed he
 - `comparison_10seeds.csv` — original RealNVP-baseline vs inversion per-seed comparison.
 - `cosine_elite/comparison.csv` — exact 10-seed cosine+elite results.
 - `annealed_kl/comparison.csv` — exact 10-seed annealed-KL results.
+- `gaussian_exploration/` — completed Gaussian-exploration ablation with per-seed and aggregate results.
 - `figures/` — method-level comparison figures.
 
 ## Evaluation note

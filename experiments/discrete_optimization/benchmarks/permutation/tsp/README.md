@@ -27,6 +27,7 @@ The TSP objective is the length of the closed tour. The active experiments study
 - `realnvp_tsp_kl.py` — annealed-KL anti-collapse experiment.
 - `realnvp_tsp_kl_cosine_dual.py` — combined KL/cosine diagnostic variant.
 - `realnvp_tsp_gaussian_exploration.py` — expected-cost optimization with fixed Gaussian output-space exploration.
+- `realnvp_tsp_gaussian_exploration_10seeds.py` — 10-seed sweep for exploration fractions 0.00, 0.10 and 0.25.
 
 ### Reference
 
@@ -66,11 +67,13 @@ For individual RealNVP variants, run the corresponding script from the same dire
 
 On the fixed TSP-20 instance, the frozen RealNVP baseline reached the reference optimum in 3/10 runs. The inversion baseline reached it in 4/10 runs. Both had median best tour length `3.522437`, while the inversion baseline was substantially more stable across seeds.
 
-Completed cosine+elite and annealed-KL results, together with learned-generator diagnostics, are documented under:
+Completed cosine+elite, annealed-KL and Gaussian-exploration results, together with learned-generator diagnostics, are documented under:
 
 ```text
 results/permutation_optimization/tsp20/
 ```
+
+The Gaussian-exploration sweep shows a clear diversity increase with larger exploration fractions, but only a small change in optimum-hit rate and a substantial generator-quality penalty at high exploration. The completed annealed-KL experiment remains the stronger observed TSP variant, while using a larger optimization budget.
 
 The inversion implementation uses the fact that an inversion changes only two boundary edges in a symmetric TSP. Its `best_found_eval` therefore counts candidate inversion moves, not full black-box objective recomputations. This distinction matters for evaluation-cost and runtime comparisons.
 
