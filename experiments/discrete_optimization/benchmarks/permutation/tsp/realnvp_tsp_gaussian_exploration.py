@@ -425,6 +425,9 @@ def train(
     best_tour = None
     best_source = None
 
+    best_flow_length = float("inf")
+    best_explore_length = float("inf")
+
     baseline = 0.0
 
     history_mean = []
@@ -612,19 +615,41 @@ def train(
                 lengths.mean().item()
             )
 
+            flow_lengths = lengths[:N_FLOW]
+
             mean_flow_length = (
-                lengths[:N_FLOW]
+                flow_lengths
                 .mean()
                 .item()
             )
 
+            flow_best_length = (
+                flow_lengths
+                .min()
+                .item()
+            )
+
+            if flow_best_length < best_flow_length:
+                best_flow_length = flow_best_length
+
             if N_EXPLORE > 0:
 
+                explore_lengths = lengths[N_FLOW:]
+
                 mean_explore_length = (
-                    lengths[N_FLOW:]
+                    explore_lengths
                     .mean()
                     .item()
                 )
+
+                explore_best_length = (
+                    explore_lengths
+                    .min()
+                    .item()
+                )
+
+                if explore_best_length < best_explore_length:
+                    best_explore_length = explore_best_length
 
                 mean_explore_responsibility = (
                     rho[N_FLOW:]
@@ -634,6 +659,7 @@ def train(
 
             else:
                 mean_explore_length = None
+                explore_best_length = None
                 mean_explore_responsibility = None
 
             next_baseline = (
@@ -646,13 +672,32 @@ def train(
                 * mean_length
             )
 
-            unique_fraction = (
+            all_unique_fraction = (
                 torch.unique(
                     tours,
                     dim=0,
                 ).shape[0]
                 / BATCH_SIZE
             )
+
+            flow_unique_fraction = (
+                torch.unique(
+                    tours[:N_FLOW],
+                    dim=0,
+                ).shape[0]
+                / N_FLOW
+            )
+
+            if N_EXPLORE > 0:
+                explore_unique_fraction = (
+                    torch.unique(
+                        tours[N_FLOW:],
+                        dim=0,
+                    ).shape[0]
+                    / N_EXPLORE
+                )
+            else:
+                explore_unique_fraction = None
 
         optimizer.step()
 
@@ -762,6 +807,17 @@ def train(
                 else "none"
             )
 
+            if N_EXPLORE > 0:
+                explore_best_text = (
+                    f"{explore_best_length:.6f}"
+                )
+                explore_unique_text = (
+                    f"{explore_unique_fraction:.3f}"
+                )
+            else:
+                explore_best_text = "none"
+                explore_unique_text = "none"
+
             print(
                 f"{epoch:5d} | "
                 f"mean={mean_length:.6f} | "
@@ -769,10 +825,14 @@ def train(
                 f"explore={explore_mean_text} | "
                 f"best={best_length:.6f} | "
                 f"source={best_source} | "
+                f"best_flow={flow_best_length:.6f} | "
+                f"best_explore={explore_best_text} | "
+                f"rho_exp={explore_rho_text} | "
+                f"unique_all={all_unique_fraction:.3f} | "
+                f"unique_flow={flow_unique_fraction:.3f} | "
+                f"unique_explore={explore_unique_text} | "
                 f"loss={loss.item():.6f} | "
                 f"baseline={baseline:.6f} | "
-                f"rho_exp={explore_rho_text} | "
-                f"unique={unique_fraction:.3f} | "
                 f"grad={float(grad_norm):.4f}"
             )
 
@@ -867,6 +927,14 @@ def train(
             test_best_length,
         "best_length_ever":
             best_length,
+        "best_flow_length_ever":
+            best_flow_length,
+        "best_explore_length_ever":
+            (
+                best_explore_length
+                if N_EXPLORE > 0
+                else None
+            ),
         "best_source":
             best_source,
         "best_tour":
@@ -920,6 +988,21 @@ def train(
             f"Best length ever:               "
             f"{best_length:.6f}"
         )
+
+        print(
+            f"Best flow length ever:          "
+            f"{best_flow_length:.6f}"
+        )
+
+        if N_EXPLORE > 0:
+            print(
+                f"Best exploration length ever:   "
+                f"{best_explore_length:.6f}"
+            )
+        else:
+            print(
+                "Best exploration length ever:   none"
+            )
 
         print(
             f"Best source:                    "
