@@ -935,6 +935,26 @@ def train(
                 if N_EXPLORE > 0
                 else None
             ),
+        "final_mean_length":
+            mean_length,
+        "final_flow_mean_length":
+            mean_flow_length,
+        "final_explore_mean_length":
+            mean_explore_length,
+        "final_unique_all":
+            float(all_unique_fraction),
+        "final_unique_flow":
+            float(flow_unique_fraction),
+        "final_unique_explore":
+            (
+                float(explore_unique_fraction)
+                if explore_unique_fraction is not None
+                else None
+            ),
+        "final_rho_explore":
+            mean_explore_responsibility,
+        "final_grad_norm":
+            float(grad_norm),
         "best_source":
             best_source,
         "best_tour":
