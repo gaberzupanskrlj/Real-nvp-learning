@@ -96,7 +96,8 @@ loss = -(advantage * log q_theta(y)).mean()
 The KL experiment changes only the training loss:
 
 [
-L=L_{mathrm{REINFORCE}}+T(t)D_{mathrm{KL}}left(q_	heta(y),|,N(0,I)ight)
+L=L_{mathrm{REINFORCE}}+T(t)D_{mathrm{KL}}left(q_	heta(y),|,N(0,I)
+ight)
 ]
 
 with geometric annealing:
@@ -170,10 +171,21 @@ The Nug20 experiment supports three observations:
 2. **Annealed KL consistently reduces distribution collapse and improves retention.**
 3. **Search-quality improvement is positive on average but seed-dependent; KL does not solve Nug20 and no run reaches the global optimum.**
 
-Together with the earlier TSP result, QAP provides a second permutation landscape where annealed KL improves the behavior of the learned search distribution. This is cross-problem evidence for the anti-collapse mechanism, but not yet evidence that the method is universal. A third structurally different permutation benchmark such as PFSP or LOP is the natural next test.
+## Cross-problem conclusion (TSP-20, QAP Nug20, PFSP Ta001)
+
+All three permutation benchmarks are now complete. Together they show:
+
+1. **Annealed KL reduces collapse at the permutation level on every problem.** Final generators keep more distinct permutations (QAP 11.2 vs 4.2 per 16,384 samples; PFSP about 85% vs 9.5% unique), but on TSP-20 every clean KL run still concentrates on a handful of tours around the near-optimal length 3.522437.
+2. **Its effect on solution quality is problem-dependent.** In controlled baseline + KL tests it is clear on TSP-20 (optimum in 8/10 runs vs 3/10), within seed noise on QAP (better on 6/10 paired seeds), and it does not replicate on PFSP (better on 5/10 paired seeds).
+3. **More permutation diversity is not more objective diversity.** On PFSP the KL generators keep about 85% unique permutations, yet every generator ends on the same makespan plateau of 1297.
+4. **A budget-matched (1+1)-EA is better on all three problems.** It finds an equal or better solution on every seed and needs far fewer objective evaluations: on TSP-20 its median reaches the optimum after about 10k evaluations against about 550k for RealNVP + KL, and on QAP its median after 1k evaluations is already better than RealNVP + KL's median at the end of the 3.3M budget.
+
+The convergence curves behind point 4 are in [`../anytime/`](../anytime/).
 
 ## Files
 
 - `qap20_realnvp_10seeds.csv` — exact baseline results for seeds 42–51.
 - `qap20_realnvp_kl_10seeds.csv` — exact annealed-KL results for seeds 42–51.
+- `qap20_one_plus_one_ea_10seeds.csv` — budget-matched (1+1)-EA results for seeds 42–51.
+- `../anytime/qap20_*` — rerun of RealNVP + KL and the EA with best-so-far traces, used for the convergence figure.
 - experiment code: `../../../experiments/discrete_optimization/benchmarks/permutation/qap/`
