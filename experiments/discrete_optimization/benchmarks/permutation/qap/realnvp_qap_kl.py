@@ -1,5 +1,6 @@
 import copy
 import csv
+import multiprocessing
 from pathlib import Path
 
 import numpy as np
@@ -52,6 +53,10 @@ N_SEEDS = 10
 
 LOG_EVERY = 100
 
+# Parallel seeds (48 threads on big.ijs.si)
+N_WORKERS = 10
+THREADS_PER_SEED = 4
+
 
 # ============================================================
 # KL temperature
@@ -62,6 +67,11 @@ T_END = 0.001
 
 RESULTS_CSV = Path(__file__).with_name(
     "qap20_realnvp_kl_10seeds.csv"
+)
+
+# Best-so-far trace for convergence plots
+TRACE_CSV = Path(__file__).with_name(
+    "qap20_realnvp_kl_trace.csv"
 )
 
 
@@ -123,6 +133,7 @@ def first_index_equal(
 
 def train_one_seed(
     seed: int,
+    trace: list,
 ):
 
     set_seed(seed)
@@ -308,6 +319,19 @@ def train_one_seed(
 
         optimizer.step()
 
+        # Trace
+        trace.append(
+            {
+                "seed": seed,
+                "epoch": epoch,
+                "phase": "train",
+                "evaluations": objective_evaluations,
+                "best_so_far": best_cost,
+                "sample_mean": costs.mean().item(),
+                "sample_best": batch_best_cost,
+            }
+        )
+
         if epoch % VALIDATE_EVERY == 0:
 
             model.eval()
@@ -379,6 +403,18 @@ def train_one_seed(
                         + 1
                     )
 
+            trace.append(
+                {
+                    "seed": seed,
+                    "epoch": epoch,
+                    "phase": "validation",
+                    "evaluations": objective_evaluations,
+                    "best_so_far": best_cost,
+                    "sample_mean": validation_mean,
+                    "sample_best": validation_best,
+                }
+            )
+
             # Same checkpoint criterion as baseline.
             if validation_mean < best_validation_mean:
 
@@ -395,7 +431,8 @@ def train_one_seed(
         ):
 
             print(
-                f"    epoch={epoch:4d}"
+                f"    seed={seed}"
+                f" | epoch={epoch:4d}"
                 f" | T={temperature:.6f}"
                 f" | loss={loss.item(): .6f}"
                 f" | reinforce={reinforce_loss.item(): .6f}"
@@ -489,6 +526,24 @@ def train_one_seed(
     }
 
 
+def run_seed(
+    seed: int,
+):
+
+    torch.set_num_threads(
+        THREADS_PER_SEED
+    )
+
+    trace = []
+
+    result = train_one_seed(
+        seed,
+        trace,
+    )
+
+    return result, trace
+
+
 def main():
 
     print("=" * 72)
@@ -536,11 +591,29 @@ def main():
 
     print()
 
+    seeds = [
+        SEED_START + run_index
+        for run_index in range(N_SEEDS)
+    ]
+
+    # Seeds run in parallel, results are collected in seed order
+    with multiprocessing.get_context(
+        "spawn"
+    ).Pool(N_WORKERS) as pool:
+        outputs = pool.map(
+            run_seed,
+            seeds,
+        )
+
     results = []
+    trace = []
 
-    for run_index in range(N_SEEDS):
+    for run_index, (result, seed_trace) in enumerate(outputs):
 
-        seed = SEED_START + run_index
+        seed = result["seed"]
+
+        results.append(result)
+        trace.extend(seed_trace)
 
         print()
         print(
@@ -548,10 +621,6 @@ def main():
             f"{N_SEEDS:02d}] "
             f"seed={seed}"
         )
-
-        result = train_one_seed(seed)
-
-        results.append(result)
 
         print()
 
@@ -602,6 +671,22 @@ def main():
 
         writer.writeheader()
         writer.writerows(results)
+
+    with open(
+        TRACE_CSV,
+        "w",
+        newline="",
+    ) as f:
+
+        writer = csv.DictWriter(
+            f,
+            fieldnames=list(
+                trace[0].keys()
+            ),
+        )
+
+        writer.writeheader()
+        writer.writerows(trace)
 
     best_costs = np.array(
         [
@@ -736,6 +821,7 @@ def main():
     print()
     print("Results saved to:")
     print(RESULTS_CSV)
+    print(TRACE_CSV)
 
 
 if __name__ == "__main__":

@@ -48,13 +48,17 @@ LOG_EVERY = 100
 N_WORKERS = 10
 THREADS_PER_SEED = 4
 
+# KL temperature, geometric: epoch 1 -> T_START, last epoch -> T_END
+T_START = 0.1
+T_END = 0.001
+
 RESULTS_CSV = Path(__file__).with_name(
-    "pfsp20_realnvp_10seeds.csv"
+    "pfsp20_realnvp_baseline_kl_10seeds.csv"
 )
 
 # Best-so-far trace for convergence plots
 TRACE_CSV = Path(__file__).with_name(
-    "pfsp20_realnvp_trace.csv"
+    "pfsp20_realnvp_baseline_kl_trace.csv"
 )
 
 
@@ -309,6 +313,23 @@ def first_index_equal(
     return indices[0].item()
 
 
+# KL temperature
+
+def kl_temperature(
+    epoch,
+):
+
+    progress = (
+        (epoch - 1)
+        / (EPOCHS - 1)
+    )
+
+    return (
+        T_START
+        * (T_END / T_START) ** progress
+    )
+
+
 # Train one independent seed
 
 def train_one_seed(
@@ -362,7 +383,7 @@ def train_one_seed(
             device=DEVICE,
         )
 
-        y, _ = model(z)
+        y, forward_log_det = model(z)
 
         with torch.no_grad():
 
@@ -446,10 +467,22 @@ def train_one_seed(
             y.detach(),
         )
 
-        loss = -(
+        reinforce_loss = -(
             advantage.detach()
             * log_prob
         ).mean()
+
+        # KL(q_theta(y) || N(0, I)), log q(y) = log p(z) - forward log det, y not detached
+        kl_loss = (
+            gaussian_log_prob(z)
+            - forward_log_det
+            - gaussian_log_prob(y)
+        ).mean()
+
+        loss = (
+            reinforce_loss
+            + kl_temperature(epoch) * kl_loss
+        )
 
         optimizer.zero_grad()
 
@@ -696,7 +729,8 @@ def run_seed(
 
 def main():
 
-    print("REALNVP — TAILLARD TA001 PFSP")
+    print("REALNVP + ANNEALED KL — TAILLARD TA001 PFSP")
+    print(f"KL temperature: {T_START} -> {T_END}, geometric")
     print()
 
     print(f"device: {DEVICE}")
