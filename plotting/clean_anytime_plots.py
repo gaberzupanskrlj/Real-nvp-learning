@@ -18,10 +18,6 @@ Run from the repository root:
 
     python plotting/clean_anytime_plots.py
 
-or, if this file is inside plotting/plotting/:
-
-    python plotting/plotting/clean_anytime_plots.py
-
 Optional custom data directory:
 
     python plotting/clean_anytime_plots.py \

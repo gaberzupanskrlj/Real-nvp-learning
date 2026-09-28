@@ -57,6 +57,22 @@ Permutation experiments use a shared random-key representation:
 latent sample -> RealNVP -> continuous keys -> argsort -> permutation -> objective
 ```
 
+### Latest result: RealNVP + KL vs (1+1)-EA convergence
+
+The current comparison is in [`results/permutation_optimization/anytime/`](results/permutation_optimization/anytime/). Both methods log their best-so-far objective value against the number of objective evaluations, 10 seeds (42–51) each, with a budget of 3,317,760 evaluations per seed (RealNVP TSP-20: 2,216,960, the frozen 2000-epoch protocol). RealNVP evaluations include its validation samples.
+
+| Problem | Reference | (1+1)-EA median final best | RealNVP + KL median final best | Runs reaching reference (EA / RealNVP) |
+|---|---:|---:|---:|---:|
+| TSP-20 | optimum 3.513669 | 3.513669 | 3.513669 | 10/10 / 8/10 |
+| QAP Nug20 | optimum 2570 | 2621 | 2802 | 0/10 / 0/10 |
+| PFSP Ta001 | best-known 1278 | 1278 | 1295.5 | 10/10 / 0/10 |
+
+![TSP-20 convergence](results/permutation_optimization/anytime/tsp20_clean_convergence.png)
+![QAP Nug20 convergence](results/permutation_optimization/anytime/qap_nug20_clean_convergence.png)
+![PFSP Ta001 convergence](results/permutation_optimization/anytime/pfsp_ta001_clean_convergence.png)
+
+The figures are made by [`plotting/clean_anytime_plots.py`](plotting/clean_anytime_plots.py) from the `*_trace.csv` files in the same folder. The per-problem sections below and the `tsp20/`, `qap/` and `pfsp/` result folders hold the earlier experiments.
+
 ### TSP
 
 The TSP folder now separates frozen TSP-20 scripts from TSP-50 scaling experiments with explicit filenames.
