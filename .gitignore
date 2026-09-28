@@ -37,3 +37,6 @@ Thumbs.db
 results/benchmark_100seeds/realnvp/*/seed_*/
 results/benchmark_100seeds/one_plus_one_ea/*/seed_*/
 .venv-k80/
+
+# Claude working notes (local only)
+CLAUDE.md
