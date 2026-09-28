@@ -32,6 +32,11 @@ RESULTS_CSV = Path(__file__).with_name(
     "qap20_one_plus_one_ea_10seeds.csv"
 )
 
+# Best-so-far trace: first evaluation, every improvement, end of budget
+TRACE_CSV = Path(__file__).with_name(
+    "qap20_one_plus_one_ea_trace.csv"
+)
+
 
 # Single-permutation cost, same convention as objective.qap_cost:
 # permutation[i] = location assigned to facility i
@@ -90,6 +95,7 @@ def run_seed(seed, flow, distance):
     target_eval = 1 if best_cost == OPTIMUM else None
 
     checkpoints = {}
+    trace = [{"seed": seed, "evaluations": 1, "best_so_far": best_cost}]
 
     for evaluation in range(2, MAX_EVALS + 1):
         child = current.copy()
@@ -109,6 +115,8 @@ def run_seed(seed, flow, distance):
                 best_cost = current_cost
                 best_found_eval = evaluation
 
+                trace.append({"seed": seed, "evaluations": evaluation, "best_so_far": best_cost})
+
                 if target_eval is None and best_cost == OPTIMUM:
                     target_eval = evaluation
 
@@ -121,6 +129,8 @@ def run_seed(seed, flow, distance):
                 f" | gap={optimality_gap(best_cost).item():.4f}%",
                 flush=True,
             )
+
+    trace.append({"seed": seed, "evaluations": MAX_EVALS, "best_so_far": best_cost})
 
     # Re-evaluate the best permutation with the objective module
     torch_flow, torch_distance = get_nug20()
@@ -146,7 +156,7 @@ def run_seed(seed, flow, distance):
 
     result["best_permutation"] = " ".join(map(str, best_permutation.tolist()))
 
-    return result
+    return result, trace
 
 
 # Run all seeds and save the results
@@ -166,6 +176,7 @@ def main():
     print(f"seeds: {SEED_START}...{SEED_START + N_SEEDS - 1}")
 
     results = []
+    trace = []
 
     for run_index in range(N_SEEDS):
         seed = SEED_START + run_index
@@ -173,8 +184,9 @@ def main():
         print()
         print(f"[{run_index + 1:02d}/{N_SEEDS:02d}] seed={seed}")
 
-        result = run_seed(seed, flow, distance)
+        result, seed_trace = run_seed(seed, flow, distance)
         results.append(result)
+        trace.extend(seed_trace)
 
         print(
             f"    best={result['best_cost']}"
@@ -187,6 +199,11 @@ def main():
         writer = csv.DictWriter(f, fieldnames=list(results[0].keys()))
         writer.writeheader()
         writer.writerows(results)
+
+    with open(TRACE_CSV, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=list(trace[0].keys()))
+        writer.writeheader()
+        writer.writerows(trace)
 
     best_costs = np.array([r["best_cost"] for r in results], dtype=float)
     best_gaps = np.array([r["best_gap_percent"] for r in results], dtype=float)
@@ -212,6 +229,7 @@ def main():
     print()
     print("Results saved to:")
     print(RESULTS_CSV)
+    print(TRACE_CSV)
 
 
 if __name__ == "__main__":

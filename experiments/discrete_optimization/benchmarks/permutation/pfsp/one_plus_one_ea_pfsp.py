@@ -32,6 +32,11 @@ RESULTS_CSV = Path(__file__).with_name(
     "pfsp_ta001_one_plus_one_ea_10seeds.csv"
 )
 
+# Best-so-far trace: first evaluation, every improvement, end of budget
+TRACE_CSV = Path(__file__).with_name(
+    "pfsp_ta001_one_plus_one_ea_trace.csv"
+)
+
 
 # Single-schedule makespan, same recurrence as objective.pfsp_makespan
 
@@ -97,6 +102,7 @@ def run_seed(seed, times):
     target_eval = 1 if best_makespan == BEST_KNOWN else None
 
     checkpoints = {}
+    trace = [{"seed": seed, "evaluations": 1, "best_so_far": best_makespan}]
 
     for evaluation in range(2, MAX_EVALS + 1):
         child = current.copy()
@@ -116,6 +122,8 @@ def run_seed(seed, times):
                 best_makespan = current_makespan
                 best_found_eval = evaluation
 
+                trace.append({"seed": seed, "evaluations": evaluation, "best_so_far": best_makespan})
+
                 if target_eval is None and best_makespan == BEST_KNOWN:
                     target_eval = evaluation
 
@@ -128,6 +136,8 @@ def run_seed(seed, times):
                 f" | gap={optimality_gap(best_makespan).item():.4f}%",
                 flush=True,
             )
+
+    trace.append({"seed": seed, "evaluations": MAX_EVALS, "best_so_far": best_makespan})
 
     # Re-evaluate the best schedule with the objective module
     assert pfsp_makespan(
@@ -150,7 +160,7 @@ def run_seed(seed, times):
 
     result["best_permutation"] = " ".join(map(str, best_permutation))
 
-    return result
+    return result, trace
 
 
 # Run all seeds and save the results
@@ -168,6 +178,7 @@ def main():
     print(f"seeds: {SEED_START}...{SEED_START + N_SEEDS - 1}")
 
     results = []
+    trace = []
 
     for run_index in range(N_SEEDS):
         seed = SEED_START + run_index
@@ -175,8 +186,9 @@ def main():
         print()
         print(f"[{run_index + 1:02d}/{N_SEEDS:02d}] seed={seed}")
 
-        result = run_seed(seed, times)
+        result, seed_trace = run_seed(seed, times)
         results.append(result)
+        trace.extend(seed_trace)
 
         print(
             f"    best={result['best_makespan']}"
@@ -189,6 +201,11 @@ def main():
         writer = csv.DictWriter(f, fieldnames=list(results[0].keys()))
         writer.writeheader()
         writer.writerows(results)
+
+    with open(TRACE_CSV, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=list(trace[0].keys()))
+        writer.writeheader()
+        writer.writerows(trace)
 
     best_makespans = np.array([r["best_makespan"] for r in results], dtype=float)
     best_gaps = np.array([r["best_gap_percent"] for r in results], dtype=float)
@@ -214,6 +231,7 @@ def main():
     print()
     print("Results saved to:")
     print(RESULTS_CSV)
+    print(TRACE_CSV)
 
 
 if __name__ == "__main__":
