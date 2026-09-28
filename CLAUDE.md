@@ -5,7 +5,7 @@ Raziskovalni projekt (IJS). Preverjamo, ali se da RealNVP normalizing flow upora
 ## Pravila sodelovanja
 
 - **Eksperimentov ne poganjaj.** Poganja jih uporabnik. Ti pišeš ali pregleduješ kodo in interpretiraš output, ki ga prilepi.
-- Odgovarjaj v slovenščini, kratko. Brez dolge teorije, razen če jo uporabnik želi.
+- Odgovarjaj v angleščini, kratko. Brez dolge teorije, razen če jo uporabnik želi.
 - Potek dela: koda → uporabnik požene → prilepi output → skupaj interpretiramo → naslednji eksperiment.
 - Ko nekaj ne dela, najprej diagnosticiraj konkretni output ali error.
 - **Ena intervencija naenkrat.** Ne spreminjaj več stvari hkrati, primerjave morajo biti paired in controlled.

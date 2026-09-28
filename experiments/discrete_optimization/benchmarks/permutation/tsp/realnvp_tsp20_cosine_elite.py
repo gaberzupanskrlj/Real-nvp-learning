@@ -1,8 +1,8 @@
 import argparse
 
-# Restored TSP-20 cosine+elite implementation using the recorded
-# 20-city experiment configuration. The historical committed cosine
-# source blob is corrupted; the active method implementation is preserved here.
+# Restored TSP-20 cosine+elite script: the original was never committed
+# (commit 823efda holds placeholder text). Same code as the TSP-50 script
+# with N_CITIES = 20.
 import copy
 import csv
 import json

@@ -35,7 +35,7 @@ TSP_INSTANCE_SEED = 12345
 REFERENCE_OPTIMUM = 5.207124420405269
 TARGET_TOL = 1e-5
 
-RESULTS_CSV = "tsp20_realnvp_kl_10seeds.csv"
+RESULTS_CSV = f"tsp{N_CITIES}_realnvp_kl_{N_SEEDS}seeds.csv"
 
 
 # TSP problem
@@ -570,7 +570,7 @@ def run_many_seeds():
     results = []
 
     print("=" * 75)
-    print("REALNVP TSP-20 | ANNEALED KL | 10 SEEDS")
+    print(f"REALNVP TSP-{N_CITIES} | ANNEALED KL | {N_SEEDS} SEEDS")
     print("=" * 75)
 
     print(

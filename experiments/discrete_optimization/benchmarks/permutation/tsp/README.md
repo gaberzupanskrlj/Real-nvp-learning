@@ -21,7 +21,7 @@ tour = torch.argsort(y, dim=1)
 - `realnvp_tsp_gaussian_exploration_10seeds.py` — TSP-20 exploration sweep.
 - `inversion_baseline_10seeds.py` — classical inversion-search baseline.
 
-The historical committed TSP-20 cosine/elite source blob is corrupted. `realnvp_tsp20_cosine_elite.py` restores the recorded 20-city configuration using the active cosine+elite implementation. Existing TSP-20 result CSVs are unchanged.
+The original TSP-20 cosine/elite script was never committed: the file saved in commit `823efda` contains only placeholder text. The experiment used the same code as the TSP-50 script with `N_CITIES = 20`, so `realnvp_tsp20_cosine_elite.py` is that script with `N_CITIES = 20`. Its settings and output columns match `results/permutation_optimization/tsp20/cosine_elite/comparison.csv`. Existing TSP-20 result CSVs are unchanged.
 
 ### TSP-50 scaling
 

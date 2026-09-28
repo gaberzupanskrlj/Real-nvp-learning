@@ -478,7 +478,7 @@ def plot_convergence(
     plt.ylabel("Tour length")
 
     plt.title(
-        "RealNVP TSP-20\n"
+        f"RealNVP TSP-{N_CITIES}\n"
         "Cosine LR + Elite Validation Checkpoint"
     )
     plt.legend()
@@ -509,7 +509,7 @@ def train(
         output_dir
         or (
             "results/"
-            "tsp_v2a_cosine_elite/"
+            f"tsp{N_CITIES}_cosine_elite/"
             f"seed_{seed}"
         )
     )
@@ -1268,7 +1268,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
         description=(
-            "RealNVP TSP-20 : "
+            f"RealNVP TSP-{N_CITIES} : "
             "cosine learning rate + "
             "top-1% validation checkpoint."
         )
@@ -1298,7 +1298,7 @@ if __name__ == "__main__":
         type=Path,
         default=Path(
             "results/"
-            "tsp_v2a_cosine_elite"
+            f"tsp{N_CITIES}_cosine_elite"
         ),
     )
 

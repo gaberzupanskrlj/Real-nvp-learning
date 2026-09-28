@@ -20,6 +20,8 @@ seed = 42
 jump sizes = [2, 4, 5, 6, 7, 8, 16, 25]
 ```
 
+The RealNVP architecture and training configuration were kept fixed across jump sizes.
+
 Observed transition:
 
 ```text
@@ -29,7 +31,7 @@ m >= 7 : global optimum not discovered
 
 Jump-7 is especially informative: the model sampled solutions with up to 99 correct coordinates but ultimately concentrated around the local optimum at 93. This indicates that valley samples are generated, but their lower reward causes REINFORCE to suppress them.
 
-For smaller valleys, the global optimum can be discovered during training and later lost by validation-mean checkpoint selection, matching the discovery-versus-retention issue seen in TSP.
+For smaller valleys (m = 2..6), the global optimum can be discovered during training and later lost by validation-mean checkpoint selection, matching the discovery-versus-retention issue seen in TSP.
 
 ## Files
 
