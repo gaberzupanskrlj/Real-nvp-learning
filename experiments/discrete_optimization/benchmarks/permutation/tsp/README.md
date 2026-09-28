@@ -16,10 +16,11 @@ tour = torch.argsort(y, dim=1)
 - `realnvp_tsp_10seeds.py` — seeds 42–51 runner for the frozen baseline.
 - `realnvp_tsp20_cosine_elite.py` — TSP-20 cosine learning-rate + elite-checkpoint experiment.
 - `realnvp_tsp20_kl.py` — original TSP-20 annealed-KL experiment used for the committed 10-seed results.
+- `realnvp_tsp20_baseline_kl.py` — clean KL test: frozen TSP-20 baseline + annealed KL (T 0.1 → 0.001), nothing else changed; paired with the frozen baseline.
 - `realnvp_tsp_kl_cosine_dual.py` — TSP-20 combined KL/cosine diagnostic variant.
 - `realnvp_tsp_gaussian_exploration.py` — TSP-20 fixed Gaussian output-space exploration.
 - `realnvp_tsp_gaussian_exploration_10seeds.py` — TSP-20 exploration sweep.
-- `inversion_baseline_10seeds.py` — classical inversion-search baseline.
+- `one_plus_one_ea_tsp20.py` — budget-matched (1+1)-EA baseline, 1 + Poisson(1) inversion moves, same protocol as the QAP and PFSP EA.
 
 The original TSP-20 cosine/elite script was never committed: the file saved in commit `823efda` contains only placeholder text. The experiment used the same code as the TSP-50 script with `N_CITIES = 20`, so `realnvp_tsp20_cosine_elite.py` is that script with `N_CITIES = 20`. Its settings and output columns match `results/permutation_optimization/tsp20/cosine_elite/comparison.csv`. Existing TSP-20 result CSVs are unchanged.
 
@@ -68,7 +69,7 @@ TSP-50 scaling should use only the explicitly named `realnvp_tsp50_*.py` scripts
 
 ## Established TSP-20 results
 
-The frozen baseline reached the reference optimum in 3/10 runs and the inversion baseline in 4/10. Completed cosine+elite, annealed-KL and Gaussian-exploration results are stored under:
+The frozen baseline reached the reference optimum in 3/10 runs. An earlier single-inversion local search (4/10) was removed from the active folder; it stalled in a 2-opt local optimum within about 1,000 evaluations on every seed. The old script remains in the legacy tree. Completed cosine+elite, annealed-KL and Gaussian-exploration results are stored under:
 
 ```text
 results/permutation_optimization/tsp20/
