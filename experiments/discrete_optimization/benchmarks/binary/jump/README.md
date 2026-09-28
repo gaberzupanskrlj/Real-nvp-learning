@@ -1,65 +1,41 @@
 # Jump-100 experiments
 
-Binary Jump experiments for studying the ability of the RealNVP + REINFORCE
-optimizer to cross deceptive fitness valleys.
+Binary Jump experiments study whether the RealNVP + REINFORCE optimizer can cross a deceptive fitness valley.
 
 ## Problem
 
-Dimension:
+```text
+dimension = 100
+target = 0, 1, 0, 1, ...
+```
 
-    n = 100
-
-The target is the Nevergrad-style alternating binary pattern:
-
-    0, 1, 0, 1, ...
-
-For jump size `m`, solutions improve normally until
-
-    correct = n - m
-
-which forms a local optimum.
-
-Solutions inside the valley receive worse fitness until the global optimum
-at `correct = n`.
+For jump size `m`, solutions improve until `correct = n - m`, which forms a local optimum. Solutions inside the valley receive worse fitness until the global optimum at `correct = n`.
 
 ## Jump-size diagnostic
 
-A controlled single-seed experiment was run with:
+A controlled single-seed experiment used:
 
-    seed = 42
-    jump sizes = [2, 4, 5, 6, 7, 8, 16, 25]
-
-The RealNVP architecture and training configuration were kept fixed.
+```text
+seed = 42
+jump sizes = [2, 4, 5, 6, 7, 8, 16, 25]
+```
 
 Observed transition:
 
-    m <= 6 : global optimum discovered
-    m >= 7 : global optimum not discovered
+```text
+m <= 6 : global optimum discovered
+m >= 7 : global optimum not discovered
+```
 
-For seed 42, the empirical transition therefore occurs between m=6 and m=7.
+Jump-7 is especially informative: the model sampled solutions with up to 99 correct coordinates but ultimately concentrated around the local optimum at 93. This indicates that valley samples are generated, but their lower reward causes REINFORCE to suppress them.
 
-The most informative failure is Jump-7:
-
-    local optimum = 93
-    maximum correct coordinates ever sampled = 99
-    global optimum = not found
-    final generator concentrated almost entirely near the local optimum
-
-This suggests that the model can explore deeply into the fitness valley,
-but REINFORCE assigns those samples lower reward than the local optimum and
-eventually suppresses them.
-
-For small valleys (m=2..6), another failure mode appears:
-the global optimum is discovered during training but is not retained by the
-validation-mean checkpoint.
-
-This mirrors the discovery-versus-retention behavior observed in the TSP
-experiments.
+For smaller valleys, the global optimum can be discovered during training and later lost by validation-mean checkpoint selection, matching the discovery-versus-retention issue seen in TSP.
 
 ## Files
 
-- `objective.py` - Jump objective
-- `realnvp_jump_size_sweep.py` - fixed-seed difficulty sweep
-- `jump_size_sweep_seed42.csv` - sweep results
-- `realnvp_100seeds.py` - standard Jump-25 RealNVP benchmark
-- `one_plus_one_ea_100seeds.py` - classical baseline
+- `objective.py` — Jump objective.
+- `realnvp_jump_size_sweep.py` — fixed-seed difficulty sweep.
+
+Sweep results are stored under `results/binary_problems/jump/`.
+
+The former zero-byte 100-seed placeholder runners were removed. A future full Jump benchmark should add actual implementations rather than empty entry points.

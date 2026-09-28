@@ -2,7 +2,7 @@ import csv
 
 import numpy as np
 
-import realnvp_tsp as tsp
+import realnvp_tsp20_baseline as tsp
 
 
 # Settings
