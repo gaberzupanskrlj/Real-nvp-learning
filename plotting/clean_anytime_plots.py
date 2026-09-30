@@ -6,6 +6,7 @@ Creates:
   - TSP-20
   - QAP Nug20
   - PFSP Ta001
+  - TSP-20 RealNVP vs learned diagonal Gaussian, with and without KL
 
 Plot design:
   x-axis: objective evaluations (log scale)
@@ -37,6 +38,14 @@ import pandas as pd
 # Problem definitions
 # ---------------------------------------------------------------------
 
+# Categorical slots 1-3: color follows the method in every figure
+EA_COLOR = "#2a78d6"
+REALNVP_COLOR = "#eb6834"
+GAUSSIAN_COLOR = "#1baf7a"
+
+# Relative to the repository root; plain file names are read from the data directory
+TSP_DIR = Path("experiments/discrete_optimization/benchmarks/permutation/tsp")
+
 PROBLEMS = [
     {
         "name": "TSP-20",
@@ -45,8 +54,10 @@ PROBLEMS = [
         "ylabel": "Best-so-far tour length",
         "reference": 3.513668846,
         "reference_label": "Global optimum",
-        "ea_trace": "tsp20_one_plus_one_ea_trace.csv",
-        "realnvp_trace": "tsp20_realnvp_kl_trace.csv",
+        "methods": [
+            ("(1+1)-EA", "tsp20_one_plus_one_ea_trace.csv", EA_COLOR),
+            ("RealNVP + KL", "tsp20_realnvp_kl_trace.csv", REALNVP_COLOR),
+        ],
         "output": "tsp20_clean_convergence.png",
     },
     {
@@ -56,8 +67,10 @@ PROBLEMS = [
         "ylabel": "Best-so-far cost",
         "reference": 2570.0,
         "reference_label": "Global optimum",
-        "ea_trace": "qap20_one_plus_one_ea_trace.csv",
-        "realnvp_trace": "qap20_realnvp_kl_trace.csv",
+        "methods": [
+            ("(1+1)-EA", "qap20_one_plus_one_ea_trace.csv", EA_COLOR),
+            ("RealNVP + KL", "qap20_realnvp_kl_trace.csv", REALNVP_COLOR),
+        ],
         "output": "qap_nug20_clean_convergence.png",
     },
     {
@@ -67,9 +80,43 @@ PROBLEMS = [
         "ylabel": "Best-so-far makespan",
         "reference": 1278.0,
         "reference_label": "Best-known",
-        "ea_trace": "pfsp_ta001_one_plus_one_ea_trace.csv",
-        "realnvp_trace": "pfsp_ta001_realnvp_baseline_kl_trace.csv",
+        "methods": [
+            ("(1+1)-EA", "pfsp_ta001_one_plus_one_ea_trace.csv", EA_COLOR),
+            ("RealNVP + KL", "pfsp_ta001_realnvp_baseline_kl_trace.csv", REALNVP_COLOR),
+        ],
         "output": "pfsp_ta001_clean_convergence.png",
+    },
+    # Diagonal Gaussian random-keys baseline (TSP-20 only). Its traces and the RealNVP
+    # no-KL trace live next to the scripts in the tsp/ folder, not in the data directory.
+    {
+        "name": "TSP-20 Gaussian + KL",
+        "slug": "tsp20",
+        "title": "TSP-20: RealNVP vs diagonal Gaussian, with KL",
+        "ylabel": "Best-so-far tour length",
+        "reference": 3.513668846,
+        "reference_label": "Global optimum",
+        "methods": [
+            ("(1+1)-EA", "tsp20_one_plus_one_ea_trace.csv", EA_COLOR),
+            ("RealNVP + KL", "tsp20_realnvp_kl_trace.csv", REALNVP_COLOR),
+            ("Gaussian + KL", TSP_DIR / "tsp20_gaussian_kl_lr0.03_trace.csv", GAUSSIAN_COLOR),
+        ],
+        "output": "tsp20_gaussian_kl_convergence.png",
+        "first_point": "Each model",
+    },
+    {
+        "name": "TSP-20 Gaussian, no KL",
+        "slug": "tsp20",
+        "title": "TSP-20: RealNVP vs diagonal Gaussian, without KL",
+        "ylabel": "Best-so-far tour length",
+        "reference": 3.513668846,
+        "reference_label": "Global optimum",
+        "methods": [
+            ("(1+1)-EA", "tsp20_one_plus_one_ea_trace.csv", EA_COLOR),
+            ("RealNVP", TSP_DIR / "tsp20_realnvp_baseline_trace.csv", REALNVP_COLOR),
+            ("Gaussian", TSP_DIR / "tsp20_gaussian_baseline_lr0.01_trace.csv", GAUSSIAN_COLOR),
+        ],
+        "output": "tsp20_gaussian_no_kl_convergence.png",
+        "first_point": "Each model",
     },
 ]
 
@@ -149,11 +196,6 @@ def summarise(runs, grid):
 
 # Plotting
 
-METHODS = [
-    ("(1+1)-EA", "ea_trace", "#2a78d6"),
-    ("RealNVP + KL", "realnvp_trace", "#eb6834"),
-]
-
 TEXT = "#0b0b0b"
 TEXT_MUTED = "#52514e"
 GRID = "#e4e3df"
@@ -170,8 +212,8 @@ def evals_label(x, _):
 
 def plot_problem(problem, data_dir):
     runs = {
-        label: load_trace(data_dir / problem[key])
-        for label, key, _ in METHODS
+        label: load_trace(repository_root() / path if isinstance(path, Path) else data_dir / path)
+        for label, path, _ in problem["methods"]
     }
 
     end = max(evals[-1] for method_runs in runs.values() for evals, _ in method_runs.values())
@@ -189,7 +231,7 @@ def plot_problem(problem, data_dir):
     fig.patch.set_facecolor(SURFACE)
     ax.set_facecolor(SURFACE)
 
-    for label, _, color in METHODS:
+    for label, _, color in problem["methods"]:
         x, low, median, high = summarise(runs[label], grid)
 
         ax.fill_between(x, low, high, step="post", color=color, alpha=0.2, linewidth=0)
@@ -245,7 +287,7 @@ def plot_problem(problem, data_dir):
     fig.text(
         0.01, 0.01,
         "Line: median over 10 seeds. Band: 25th-75th percentile. "
-        f"RealNVP's first point is at {start:,} evaluations, after its first batch.",
+        f"{problem.get('first_point', 'RealNVP')}'s first point is at {start:,} evaluations, after its first batch.",
         color=TEXT_MUTED,
         fontsize=8.5,
         va="bottom",
