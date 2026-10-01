@@ -119,7 +119,7 @@ On TSP-20 RealNVP finds the optimum but does not reliably keep it: with the clea
 | 1e-2 | 0/3, 4.4815 | 2/3, 3.516592, 3.522825 |
 
 - Baseline: 1e-4 is selected, so the frozen LR is already the best and the existing trace run (4/10) is also the tuned result. Without KL a higher LR does not converge (test mean 4.8 at 3e-3, 8.2 at 1e-2).
-- KL: 1e-4, 3e-4 and 1e-3 tie on best-ever; the tie-break selects 1e-3, the differences in test mean are below 0.0003. The main run at 1e-3 on seeds 42–51 was not finished at handoff (`realnvp_tsp20_lr_trace.py kl 1e-3`, ~1 h); the KL conclusion therefore rests on the sweep (3 seeds). The KL rows in the tables stay at LR 1e-4.
+- KL: 1e-4, 3e-4 and 1e-3 tie on best-ever; the tie-break selects 1e-3, the differences in test mean are below 0.0003. The KL conclusion rests on the sweep (3 seeds). The KL rows in the tables stay at LR 1e-4.
 - P(optimum) = 0 at every LR in both variants. With KL a higher LR only shrinks the distribution further (1e-3: 1–2 unique tours, 1e-4: 9–12). Retention does not depend on the LR.
 - On the tuning seeds a tuned RealNVP is even slightly better than a tuned Gaussian (baseline 2/3 vs 0/3, KL 3/3 vs 2/3).
 
@@ -278,21 +278,15 @@ Scripts write their CSVs next to themselves; the CSVs for the anytime comparison
 
 The other scripts in `tsp/` produced older results from the TSP-20 table above or are diagnostic: `realnvp_tsp20_kl.py` (original KL, confounded), `realnvp_tsp20_cosine_elite.py`, `realnvp_tsp_gaussian_exploration*.py`, `realnvp_tsp50_*.py`, `realnvp_tsp_kl_cosine_dual.py`, `simple_tsp_baseline.py` (early TSP-10 sanity check without RealNVP). They are described in `tsp/README.md`; they are not needed to continue.
 
-Related documents:
-
-- [RealNVP Permutation Benchmark: Results Broadsheet](https://claude.ai/code/artifact/87917475-f0eb-468d-ace0-7ec2fd65941c): detailed permutation part.
-- [2D Basin Study: How RealNVP Converges](https://claude.ai/code/artifact/8743c156-50bb-4e9a-b1f5-674a95b9f091): steps 1–4 of the 2D study.
-
 ## Open questions and next steps
 
 The most informative test would be whether the 2D diagnosis (a lost basin without samples has no signal) also holds on permutations. Suggestions by priority:
 
-1. **KL main run at LR 1e-3 on TSP-20** (`realnvp_tsp20_lr_trace.py kl 1e-3`, seeds 42–51, ~1 h). The LR sweep is finished (see TSP-20); the 10-seed confirmation for KL at the selected LR is still missing.
-2. **Warm start or annealing on TSP-20.** Analogue of steps 5–6: start from a distribution that already has mass on the optimum and check whether REINFORCE + KL keeps that mass.
-3. **Diagnostics on permutations:** fraction of the batch with distinct objective values, gradient SNR, effective sample size, entropy, time between discovery and loss of the elite solution. This tests the signal hypothesis directly.
-4. **CMA-ES over random keys.** Separates the effect of the representation from the way the distribution is learned.
-5. **Gaussian on QAP and PFSP**, to extend the claim "collapse is not specific to the flow" beyond TSP-20.
-6. **Jump_k with 10 seeds per k** (currently one seed per k).
-7. The plot `basin_multi_plots.py` (2D density, 4 minima) waits for a rerun of step 4 with grid snapshots.
+1. **Warm start or annealing on TSP-20.** Analogue of steps 5–6: start from a distribution that already has mass on the optimum and check whether REINFORCE + KL keeps that mass.
+2. **Diagnostics on permutations:** fraction of the batch with distinct objective values, gradient SNR, effective sample size, entropy, time between discovery and loss of the elite solution. This tests the signal hypothesis directly.
+3. **CMA-ES over random keys.** Separates the effect of the representation from the way the distribution is learned.
+4. **Gaussian on QAP and PFSP**, to extend the claim "collapse is not specific to the flow" beyond TSP-20.
+5. **Jump_k with 10 seeds per k** (currently one seed per k).
+6. The plot `basin_multi_plots.py` (2D density, 4 minima) waits for a rerun of step 4 with grid snapshots.
 
 Simply adding new architectures or heuristic fixes makes no sense until it is clear whether the bottleneck is the training signal or the representation.
