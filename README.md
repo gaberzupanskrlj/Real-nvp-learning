@@ -4,6 +4,8 @@ A research/learning repository for experimenting with **RealNVP normalizing flow
 
 The current discrete-optimization work contains a completed 100-seed binary benchmark and permutation studies on **TSP, QAP and PFSP**.
 
+> **Project status: concluded October 2026.** Start with the handoff (in Slovenian): [`PROJECT_HANDOFF.md`](PROJECT_HANDOFF.md) gives the story, main findings and next steps; [`PROJECT_HANDOFF_TECHNICAL.md`](PROJECT_HANDOFF_TECHNICAL.md) has the detailed results, protocol and pitfalls. The 2D basin study is described in [`experiments/continuous_optimization/README.md`](experiments/continuous_optimization/README.md).
+
 ## Binary optimization benchmark
 
 Five 100-dimensional IOH/PBO problems are compared using RealNVP + REINFORCE and a standard elitist (1+1)-EA:
@@ -137,4 +139,4 @@ On Windows:
 pip install -r requirements.txt
 ```
 
-Earlier density-estimation and continuous-optimization experiments remain under `experiments/density_estimation/` and `experiments/continuous_optimization/`.
+Earlier density-estimation experiments remain under `experiments/density_estimation/`. `experiments/continuous_optimization/` holds the 2D basin study (see its README) next to older continuous toy scripts.
