@@ -11,12 +11,12 @@ Projekt (september – 1. oktober 2026) je preverjal, ali se RealNVP normalizing
 Potek dela:
 
 1. **Binarni benchmark.** Pet IOH/PBO problemov (n = 100, 100 seedov) in Jump_k proti (1+1)-EA.
-2. **Permutacijski benchmark.** Random-key reprezentacija (argsort) na TSP-20, QAP Nug20 in PFSP Ta001 z enakim zamrznjenim protokolom; TSP-50 kot sanity check.
-3. **Poskusi popravka retentiona na TSP-20.** Cosine LR + elite, Gaussian exploration, annealed KL (s čistim testom ene intervencije) in Boltzmann varianta KL.
-4. **Prenos KL na QAP in PFSP**, da preverimo, ali je efekt splošen.
-5. **Budget-matched (1+1)-EA** za vse tri permutacijske probleme in anytime krivulje (best-so-far proti številu evalvacij).
-6. **Kontrola brez flowa.** Diagonalni Gaussian namesto RealNVP na TSP-20, vse drugo enako.
-7. **2D basin študija.** Toy problem z znanim Boltzmann targetom, da ločimo kapaciteto modela od dinamike treninga: temperature, MLE fit, warm start in annealing.
+1. **Permutacijski benchmark.** Random-key reprezentacija (argsort) na TSP-20, QAP Nug20 in PFSP Ta001 z enakim zamrznjenim protokolom; TSP-50 kot sanity check.
+2. **Poskusi popravka retentiona na TSP-20.** Cosine LR + elite, Gaussian exploration, annealed KL (s čistim testom ene intervencije) in Boltzmann varianta KL.
+3. **Prenos KL na QAP in PFSP**, da preverimo, ali je efekt splošen.
+4. **Budget-matched (1+1)-EA** za vse tri permutacijske probleme in anytime krivulje (best-so-far proti številu evalvacij).
+5. **Kontrola brez flowa.** Diagonalni Gaussian namesto RealNVP na TSP-20, vse drugo enako.
+6. **2D basin študija.** Toy problem z znanim Boltzmann targetom, da ločimo kapaciteto modela od dinamike treninga: temperature, MLE fit, warm start in annealing.
 
 ## Glavni rezultati
 
@@ -43,7 +43,7 @@ Povprečen best-ever objective čez 10 seedov (42–51) in število seedov, ki d
 - Budget: QAP/PFSP 3,317,760 evalvacij za vse metode; TSP RealNVP/Gaussian 2,216,960 (2000 epoch), EA 3,317,760, vendar EA optimum najde že po 720–69,742 evalvacijah (mediana ~10k).
 - Saved vs trace: rerun ni bit-exact (število niti spremeni float rezultate; isti basini, drugačne per-seed številke). Gaussian je primerjan paired s trace runi in anytime grafi so iz trace runov; README tabele v `results/` uporabljajo saved rune. EA rerun je byte-identičen saved runu.
 - Legacy PFSP KL (1293.1) je drug skript z drugim knjigovodstvom in ni v tej tabeli (glej PFSP razdelek).
-- Gaussian = diagonalni Gaussian random keys, LR tunan (baseline 1e-2, KL 3e-2); RealNVP ima fiksen LR 1e-4.
+- Gaussian = diagonalni Gaussian random keys, LR tunan (baseline 1e-2, KL 3e-2). RealNVP LR sweep izbere 1e-4 za baseline (= zamrznjen protokol) in 1e-3 za KL (glej TSP-20).
 
 ## Metoda in protokol
 
@@ -106,7 +106,22 @@ Na TSP-20 RealNVP optimum najde, ga pa zanesljivo ne obdrži: pri clean baseline
 
 **Boltzmann run in efektivna temperatura.** Če advantage standardiziramo in nato dodamo T · KL, je efektivna temperatura glede na dolžino T · std(length), ki se krči, ko se distribucija koncentrira. Brez standardizacije (pravi Boltzmann target ∝ exp(−length/T)) je hitov 9/10, napoved P(optimum) > 0 pa je ovržena: 0/10, test best povsod 3.522437. Flow zaostaja za schedulom (val mean pri epochu 1000: 3.71 vs 3.54).
 
-**Diagonal Gaussian random keys** (y = μ + σ · z, 40 parametrov, vse drugo enako, preverjeno z diffom). Gaussian + KL najde optimum prej (122k–160k vs 403k–799k evalvacij) in ga na 3 seedih obdrži, RealNVP na 0. Discovery je primerljiv; coupling layerji pri trenutnem protokolu niso pokazali merljive prednosti. **Caveat:** LR je bil za Gaussian tunan (sweep na seedih 0–2), za RealNVP ne.
+**Diagonal Gaussian random keys** (y = μ + σ · z, 40 parametrov, vse drugo enako, preverjeno z diffom). Gaussian + KL najde optimum prej (122k–160k vs 403k–799k evalvacij) in ga na 3 seedih obdrži, RealNVP na 0. Discovery je primerljiv; coupling layerji pri trenutnem protokolu niso pokazali merljive prednosti. LR je tunan za obe metodi z istim pravilom (RealNVP sweep v naslednjem odstavku).
+
+**RealNVP LR sweep (1. 10.).** Isti sweep kot za Gaussian: `realnvp_tsp20_lr_trace.py`, LR 1e-4 … 1e-2, tuning seedi 0–2, izbira po najnižjem mean best-ever, pri izenačenju po najnižjem mean test length.
+
+| LR | Baseline: hiti, mean best-ever | KL: hiti, mean best-ever, mean test length |
+| --- | --- | --- |
+| 1e-4 | 2/3, 3.5166 (izbran) | 3/3, 3.513669, 3.522730 |
+| 3e-4 | 1/3, 3.5352 | 3/3, 3.513669, 3.522574 |
+| 1e-3 | 0/3, 3.5224 | 3/3, 3.513669, 3.522459 (izbran) |
+| 3e-3 | 0/3, 3.6158 | 1/3, 3.519515, 3.522504 |
+| 1e-2 | 0/3, 4.4815 | 2/3, 3.516592, 3.522825 |
+
+- Baseline: izbran je 1e-4, torej zamrznjen LR je že najboljši in obstoječi trace run (4/10) je tudi tunan rezultat. Višji LR brez KL ne konvergira (test mean 4.8 pri 3e-3, 8.2 pri 1e-2).
+- KL: 1e-4, 3e-4 in 1e-3 so izenačeni na best-ever; tie-break izbere 1e-3, razlike v test mean so pod 0.0003. Main run pri 1e-3 na seedih 42–51 ob predaji ni bil dokončan (`realnvp_tsp20_lr_trace.py kl 1e-3`, ~1 h); zaključek za KL zato temelji na sweepu (3 seedi). KL vrstice v tabelah ostanejo pri LR 1e-4.
+- P(optimum) = 0 pri vseh LR v obeh variantah. Višji LR s KL distribucijo le bolj skrči (1e-3: 1–2 unique tour, 1e-4: 9–12). Retention od LR ni odvisen.
+- Na tuning seedih je tunan RealNVP celo nekoliko boljši od tunanega Gaussiana (baseline 2/3 vs 0/3, KL 3/3 vs 2/3).
 
 ## QAP Nug20 in PFSP Ta001
 
@@ -193,7 +208,7 @@ Vsaka ugotovitev ima naveden dokaz in mejo, do katere velja.
 | --- | --- | --- | --- |
 | RealNVP ni boljši od (1+1)-EA | 5 binarnih problemov (100 seedov); TSP/QAP/PFSP: EA enak ali boljši na 10/10 paired seedih (strogo boljši 2/10, 10/10, 10/10) | vse testirane probleme pri n = 100 oz. 20 | močnejši baselini (tabu, iterated greedy) niso potrebni za to trditev |
 | Discovery ≠ retention | TSP: P(optimum) = 0 na 10/10 pri RealNVP + KL; QAP retention loss 40–66 | TSP-20, QAP, PFSP | Gaussian + KL optimum obdrži na 3/10; confounded RealNVP runi občasno (cosine 3/10, original KL 1/10) |
-| Kolaps ni specifičen za flow | Gaussian vs RealNVP na TSP-20: 3/10 vs 4/10, 7/10 vs 8/10 | TSP-20 | QAP/PFSP; LR za RealNVP ni tunan |
+| Kolaps ni specifičen za flow | Gaussian vs RealNVP na TSP-20: 3/10 vs 4/10, 7/10 vs 8/10; LR tunan za obe metodi | TSP-20 | QAP/PFSP |
 | KL poveča permutacijsko diversity | unique permutacij višji na vseh treh problemih | TSP, QAP, PFSP | objective diversity (PFSP plato 1297) |
 | KL izboljša discovery | TSP-20 čist test 8/10 vs 3/10 | TSP-20 | PFSP se ne replicira (5/10 paired), QAP v šumu |
 | Kolaps iz scratcha izvira iz dinamike treninga, ne iz alokacijske kapacitete ali optimuma lossa | 2D: warm start drži oba bazena z nižjim KL, scratch ne | 2D toy, T = 0.05, LR 1e-4 | prenos na permutacije je hipoteza |
@@ -223,17 +238,45 @@ Naslednje stvari niso razvidne iz kode na prvi pogled in so že povzročile napa
 
 Vse je v repozitoriju [gaberzupanskrlj/Real-nvp-learning](https://github.com/gaberzupanskrlj/Real-nvp-learning), veja `main`. Skripte se poganjajo iz svoje mape.
 
-| Kaj | Pot |
+Status: **aktivno** = koda, iz katere so rezultati v tem dokumentu; **rezultati** = CSV-ji in grafi, na katere se sklicujejo README-ji; **dokumentacija**; **legacy** = starejše ali raziskovalne stvari, ki niso del zaključkov.
+
+| Kaj | Pot | Status |
+| --- | --- | --- |
+| Predaja (uvod / podrobno) | `PROJECT_HANDOFF.md`, `PROJECT_HANDOFF_TECHNICAL.md` | dokumentacija |
+| Binarni benchmark (IOH/PBO, Jump_k) | `experiments/discrete_optimization/benchmarks/binary/{ioh,jump}/` | aktivno |
+| Binarni rezultati, 100 seedov | `results/benchmark_100seeds/` | rezultati |
+| TSP / QAP / PFSP skripte (RealNVP, Gaussian, EA, skupni `objective.py`) | `experiments/discrete_optimization/benchmarks/permutation/{tsp,qap,pfsp}/` | aktivno |
+| Anytime primerjava RealNVP + KL vs EA (trace runi) | `results/permutation_optimization/anytime/` | rezultati (kanonični za primerjavo z EA) |
+| Shranjeni permutacijski runi | `results/permutation_optimization/{tsp20,tsp50,qap,pfsp}/` | rezultati (saved runi) |
+| 2D basin študija (skripte, CSV, grafi, README) | `experiments/continuous_optimization/basin_2d_*.py` in `basin2d_*` | aktivno + rezultati |
+| Plot skripte | `plotting/` | aktivno |
+| Povzetek dne 30. 9. za mentorja | `experiments/README_2026-09-30.md` | dokumentacija |
+| Stare 2D/10D toy skripte (napačen estimator) | `experiments/continuous_optimization/objective_*.py` | legacy |
+| Density estimation (two moons, ring) | `experiments/density_estimation/` | legacy |
+| Starejši raziskovalni permutacijski eksperimenti | `experiments/discrete_optimization/legacy/` | legacy |
+| Zgodnji binarni runi, IOH izvozi, zapiski | `results/benchmark/`, `results/binary_problems/`, `results/logs/`, `data/`, `notes/` | legacy |
+
+### Ključne skripte
+
+Skripte pišejo CSV ob sebi; CSV-ji za anytime primerjavo so kopirani v `results/permutation_optimization/anytime/`.
+
+| Rezultat | Skripta (mapa `permutation/` oz. 2D mapa) |
 | --- | --- |
-| Binarni benchmark (skripte) | `experiments/discrete_optimization/benchmarks/binary/` |
-| Binarni rezultati, 100 seedov | `results/benchmark_100seeds/` |
-| TSP / QAP / PFSP skripte (RealNVP, Gaussian, EA, skupni `objective.py`) | `experiments/discrete_optimization/benchmarks/permutation/{tsp,qap,pfsp}/` |
-| Anytime CSV-ji in grafi (trace runi) | `results/permutation_optimization/anytime/` |
-| Starejši permutacijski rezultati | `results/permutation_optimization/{tsp20,tsp50,qap,pfsp}/` |
-| 2D basin študija (skripte, CSV, README) | `experiments/continuous_optimization/` |
-| Plot skripte | `plotting/` (`clean_anytime_plots.py`, `basin_temperature_plots.py`, `basin_mle_plots.py`) |
-| Legacy in raziskovalne skripte | `experiments/discrete_optimization/legacy/` |
-| Povzetek dne 30. 9. za mentorja | `experiments/README_2026-09-30.md` |
+| TSP-20 zamrznjen baseline (saved, 3/10) | `tsp/realnvp_tsp20_baseline.py` (model, en seed), `tsp/realnvp_tsp_10seeds.py` (seedi 42–51) |
+| TSP-20 čist baseline + KL (saved, 8/10) | `tsp/realnvp_tsp20_baseline_kl.py` |
+| TSP-20 trace reruni (baseline 4/10, KL 8/10) | `tsp/realnvp_tsp20_trace.py baseline\|kl` |
+| TSP-20 Boltzmann (KL brez standardizacije) | `tsp/realnvp_tsp20_boltzmann_trace.py` |
+| TSP-20 diagonalni Gaussian (sweep + main run) | `tsp/gaussian_tsp20_trace.py baseline\|kl sweep\|<LR>` |
+| TSP-20 RealNVP LR sweep (1. 10.) | `tsp/realnvp_tsp20_lr_trace.py baseline\|kl sweep\|<LR>` |
+| TSP-20 (1+1)-EA | `tsp/one_plus_one_ea_tsp20.py` |
+| QAP baseline / KL / EA | `qap/realnvp_qap_baseline.py`, `qap/realnvp_qap_kl.py`, `qap/one_plus_one_ea_qap.py` |
+| PFSP baseline / čist KL / EA | `pfsp/realnvp_pfsp_baseline.py`, `pfsp/realnvp_pfsp_baseline_kl.py`, `pfsp/one_plus_one_ea_pfsp.py` |
+| Binarni 100-seed benchmark | `binary/ioh/realnvp/*_100seeds.py`, `binary/ioh/baselines/*_100seeds.py` |
+| Jump_k | `binary/jump/realnvp_jump_size_sweep.py` |
+| 2D basin študija, koraki 1–6 | `basin_2d_trace.py`, `basin_2d_multi_trace.py`, `basin_2d_mle_fit.py`, `basin_2d_anneal.py` (ukazi v 2D README) |
+| Anytime grafi | `plotting/clean_anytime_plots.py` |
+
+Ostale skripte v `tsp/` so dale starejše rezultate iz tabele TSP-20 zgoraj ali so diagnostične: `realnvp_tsp20_kl.py` (original KL, confounded), `realnvp_tsp20_cosine_elite.py`, `realnvp_tsp_gaussian_exploration*.py`, `realnvp_tsp50_*.py`, `realnvp_tsp_kl_cosine_dual.py`, `simple_tsp_baseline.py` (zgodnji TSP-10 sanity check brez RealNVP). Opisane so v `tsp/README.md`; za nadaljevanje niso potrebne.
 
 Povezani dokumenti:
 
@@ -244,7 +287,7 @@ Povezani dokumenti:
 
 Največ informacije bi dal test, ali 2D diagnoza (izgubljen bazen brez vzorcev nima signala) velja tudi na permutacijah. Predlogi po prioriteti:
 
-1. **RealNVP LR sweep na TSP-20** (teče 1. 10.): `tsp/realnvp_tsp20_lr_trace.py`, LR 1e-4, 3e-4, 1e-3, 3e-3, 1e-2, seedi 0–2, isto pravilo izbire kot za Gaussian, nato main run na seedih 42–51. Odloči, ali trditev "coupling layerji ne prinesejo prednosti" velja brez caveata.
+1. **KL main run pri LR 1e-3 na TSP-20** (`realnvp_tsp20_lr_trace.py kl 1e-3`, seedi 42–51, ~1 h). LR sweep je končan (glej TSP-20); manjka še 10-seed potrditev za KL pri izbranem LR.
 2. **Warm start ali annealing na TSP-20.** Analog koraka 5–6: začni iz distribucije, ki že ima maso na optimumu, in preveri, ali REINFORCE + KL maso obdrži.
 3. **Diagnostika na permutacijah:** delež batcha z različnimi objective vrednostmi, gradient SNR, effective sample size, entropija, čas med discovery in izgubo elite rešitve. To neposredno testira hipotezo o signalu.
 4. **CMA-ES nad random keys.** Loči vpliv reprezentacije od načina učenja distribucije.

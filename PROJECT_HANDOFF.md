@@ -38,15 +38,13 @@ Na nobenem testiranem problemu RealNVP ni bil boljši od preprostega evolucijske
 
 Drugi rezultat je razlika med odkrivanjem in ohranjanjem. Model optimum najde, končna porazdelitev pa ga praviloma ne vsebuje. Noben od preizkušenih popravkov tega ni zanesljivo rešil; nekateri starejši runi so optimum občasno obdržali.
 
-Tretji rezultat je, da težava ni specifična za RealNVP. Gaussov model s samo 40 parametri je na TSP-20 dosegel približno enako kot RealNVP, v nekaterih pogledih celo bolje. Dodatna izraznost flowa torej ni pomagala. Ena pomanjkljivost te primerjave je, da je bila učna stopnja nastavljena samo za Gaussov model; to se trenutno preverja (glej spodaj).
+Tretji rezultat je, da težava ni specifična za RealNVP. Gaussov model s samo 40 parametri je na TSP-20 dosegel približno enako kot RealNVP, v nekaterih pogledih celo bolje. Dodatna izraznost flowa torej ni pomagala. Učna stopnja je bila za oba modela izbrana z enakim postopkom; tudi RealNVP pri najboljši učni stopnji optimuma ne obdrži.
 
 Četrti in po mojem najzanimivejši rezultat izhaja iz 2D študije. Model zna predstaviti porazdelitev z več minimumi in ko začne iz pravilne porazdelitve, jo med učenjem tudi obdrži. Ko pa se uči od začetka, redek minimum izgubi, čeprav bi bila rešitev z obema minimumoma boljša tudi po kriteriju, ki ga optimizira. Razlog je preprost: ko v nekem območju ni več vzorcev, učenje o njem ne dobi nobene informacije in se tja ne more vrniti. Težava je torej v dinamiki učenja, ne v kapaciteti modela. Ali isti mehanizem povzroča izgubo optimuma tudi pri TSP, še ni preverjeno.
 
 ## Kje bi nadaljeval
 
-Najprej bi zaključil primerjavo z Gaussovim modelom. Na dan predaje teče iskanje najboljše učne stopnje za RealNVP na TSP-20 (skripta `realnvp_tsp20_lr_trace.py`). Če bo RealNVP z dobro nastavljeno učno stopnjo še vedno primerljiv z Gaussovim modelom, je zaključek, da flow ne prinaša prednosti, trden.
-
-Nato bi preveril, ali 2D ugotovitev velja tudi za permutacije: učenje pri TSP začeti iz porazdelitve, ki optimum že vsebuje, in pogledati, ali ga model obdrži. Če ga, je težava tudi tam v dinamiki učenja. Smiselne so še primerjava s CMA-ES na isti predstavitvi, Gaussov model na QAP in PFSP ter več ponovitev eksperimenta Jump_k. Podroben seznam je na koncu tehničnega dokumenta.
+Najprej bi preveril, ali 2D ugotovitev velja tudi za permutacije: učenje pri TSP začeti iz porazdelitve, ki optimum že vsebuje, in pogledati, ali ga model obdrži. Če ga, je težava tudi tam v dinamiki učenja. Smiselne so še primerjava s CMA-ES na isti predstavitvi, Gaussov model na QAP in PFSP ter več ponovitev eksperimenta Jump_k. Podroben seznam je na koncu tehničnega dokumenta.
 
 Ne bi pa nadaljeval z dodajanjem novih arhitektur ali hevrističnih popravkov, dokler ni jasno, ali je ozko grlo v učenju ali v predstavitvi problema.
 

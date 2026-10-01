@@ -22,6 +22,13 @@ tour = torch.argsort(y, dim=1)
 - `realnvp_tsp_gaussian_exploration_10seeds.py` — TSP-20 exploration sweep.
 - `one_plus_one_ea_tsp20.py` — budget-matched (1+1)-EA baseline, 1 + Poisson(1) inversion moves, same protocol as the QAP and PFSP EA.
 
+### Trace reruns and controls (30. 9. – 1. 10.)
+
+- `realnvp_tsp20_trace.py baseline|kl` — reruns of the frozen baseline and the clean KL script with a best-so-far trace (used for the anytime comparison with the EA).
+- `realnvp_tsp20_boltzmann_trace.py` — the KL trace run without advantage standardization (fixed Boltzmann target).
+- `gaussian_tsp20_trace.py baseline|kl sweep|<LR>` — learned diagonal Gaussian random keys instead of RealNVP; LR sweep on seeds 0–2, then main run on seeds 42–51.
+- `realnvp_tsp20_lr_trace.py baseline|kl sweep|<LR>` — the same LR sweep for RealNVP (copy of the Gaussian script with the frozen RealNVP model).
+
 The original TSP-20 cosine/elite script was never committed: the file saved in commit `823efda` contains only placeholder text. The experiment used the same code as the TSP-50 script with `N_CITIES = 20`, so `realnvp_tsp20_cosine_elite.py` is that script with `N_CITIES = 20`. Its settings and output columns match `results/permutation_optimization/tsp20/cosine_elite/comparison.csv`. Existing TSP-20 result CSVs are unchanged.
 
 ### TSP-50 scaling

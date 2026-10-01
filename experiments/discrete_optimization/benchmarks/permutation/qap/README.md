@@ -40,6 +40,7 @@ so the model learns a continuous distribution over score vectors while the objec
 - `objective.py` — Nug20 matrices, known optimum, permutation-convention conversion, vectorized QAP objective, and sanity tests.
 - `realnvp_qap_baseline.py` — frozen 10-seed RealNVP + REINFORCE baseline.
 - `realnvp_qap_kl.py` — same setup with annealed KL regularization.
+- `one_plus_one_ea_qap.py` — budget-matched (1+1)-EA baseline, 1 + Poisson(1) swap moves.
 
 ## Frozen experiment settings
 
